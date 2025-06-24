@@ -1,0 +1,88 @@
+import { NAV_ITEM_TYPE_ITEM, NAV_ITEM_TYPE_COLLAPSE } from '@/constants/navigation.constant'
+import { FLEETBOLD_PREFIX_PATH } from '@/constants/route.constant'
+import { ADMIN, USER } from '@/constants/roles.constant'
+
+const fleetBoldNavigationConfig = [
+    {
+        key: 'fleetBold.dashboard',
+        path: `${FLEETBOLD_PREFIX_PATH}/dashboard`,
+        title: 'Dashboard',
+        translateKey: 'nav.fleetBold.dashboard',
+        icon: 'dashboard',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.search',
+        path: `${FLEETBOLD_PREFIX_PATH}/search`,
+        title: 'Search',
+        translateKey: 'nav.fleetBold.search',
+        icon: 'search',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.reservations',
+        path: `${FLEETBOLD_PREFIX_PATH}/reservations`,
+        title: 'Reservations',
+        translateKey: 'nav.fleetBold.reservations',
+        icon: 'reservations',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.expenses',
+        path: `${FLEETBOLD_PREFIX_PATH}/expenses`,
+        title: 'Expenses',
+        translateKey: 'nav.fleetBold.expenses',
+        icon: 'expenses',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.invoices',
+        path: `${FLEETBOLD_PREFIX_PATH}/invoices`,
+        title: 'Invoices',
+        translateKey: 'nav.fleetBold.invoices',
+        icon: 'invoices',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.export',
+        path: `${FLEETBOLD_PREFIX_PATH}/export`,
+        title: 'Export',
+        translateKey: 'nav.fleetBold.export',
+        icon: 'export',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.users',
+        path: `${FLEETBOLD_PREFIX_PATH}/users`,
+        title: 'Users',
+        translateKey: 'nav.fleetBold.users',
+        icon: 'users',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
+        key: 'fleetBold.settings',
+        path: `${FLEETBOLD_PREFIX_PATH}/settings`,
+        title: 'Settings',
+        translateKey: 'nav.fleetBold.settings',
+        icon: 'settings',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+]
+
+export default fleetBoldNavigationConfig 

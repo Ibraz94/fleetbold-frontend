@@ -1,0 +1,85 @@
+import {
+    HiShieldCheck,
+    HiOfficeBuilding,
+    HiExclamationCircle,
+    HiCog,
+    HiDocumentText,
+    HiCurrencyDollar,
+} from 'react-icons/hi'
+import { SUPER_ADMIN } from '@/constants/roles.constant'
+
+const superAdminNavigationConfig = [
+    {
+        key: 'superAdmin',
+        path: '',
+        title: 'Super Admin Panel',
+        translateKey: 'nav.superAdmin',
+        icon: HiShieldCheck,
+        type: 'title',
+        authority: [SUPER_ADMIN],
+        subMenu: [
+            {
+                key: 'superAdmin.dashboard',
+                path: '/super-admin/dashboard',
+                title: 'Overview',
+                translateKey: 'nav.superAdmin.dashboard',
+                icon: HiOfficeBuilding,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'superAdmin.companies',
+                path: '/super-admin/companies',
+                title: 'Company Directory',
+                translateKey: 'nav.superAdmin.companies',
+                icon: HiOfficeBuilding,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'superAdmin.expenses',
+                path: '/super-admin/expenses',
+                title: 'Disputed Expenses',
+                translateKey: 'nav.superAdmin.expenses',
+                icon: HiExclamationCircle,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'superAdmin.plans',
+                path: '/super-admin/plans',
+                title: 'Plans & Limits',
+                translateKey: 'nav.superAdmin.plans',
+                icon: HiCog,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'superAdmin.audit',
+                path: '/super-admin/audit',
+                title: 'Audit Logs',
+                translateKey: 'nav.superAdmin.audit',
+                icon: HiDocumentText,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'superAdmin.billing',
+                path: '/super-admin/billing',
+                title: 'Billing Overview',
+                translateKey: 'nav.superAdmin.billing',
+                icon: HiCurrencyDollar,
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
+        ],
+    },
+]
+
+export default superAdminNavigationConfig 
