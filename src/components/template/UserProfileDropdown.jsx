@@ -17,14 +17,9 @@ import Switcher from '@/components/ui/Switcher'
 
 const dropdownItemList = [
     {
-        label: 'Profile',
-        path: '/concepts/account/settings',
-        icon: <PiUserDuotone />,
-    },
-    {
         label: 'Account Setting',
         path: '/concepts/account/settings',
-        icon: <PiGearDuotone />,
+        icon: <PiUserDuotone />,
     },
     {
         label: 'Activity Log',
