@@ -22,6 +22,24 @@ const fleetBoldRoute = [
         },
     },
     {
+        key: 'fleetBold.vehicles',
+        path: `${FLEETBOLD_PREFIX_PATH}/vehicles`,
+        component: lazy(() => import('@/views/fleetBold/Vehicles')),
+        authority: [ADMIN, USER],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
+    {
+        key: 'fleetBold.vehicles.add',
+        path: `${FLEETBOLD_PREFIX_PATH}/vehicles/add`,
+        component: lazy(() => import('@/views/fleetBold/Vehicles/AddVehicle')),
+        authority: [ADMIN, USER],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
+    {
         key: 'fleetBold.reservations',
         path: `${FLEETBOLD_PREFIX_PATH}/reservations`,
         component: lazy(() => import('@/views/fleetBold/Reservations')),

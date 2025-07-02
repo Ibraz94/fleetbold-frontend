@@ -1,4 +1,4 @@
-import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker } from '@/components/ui'
+import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip } from '@/components/ui'
 import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter } from 'react-icons/hi'
 import { useState, useCallback, useMemo } from 'react'
 
@@ -7,7 +7,7 @@ const mockExpenses = [
         id: 'EXP001',
         type: 'Toll',
         amount: 25.50,
-        status: 'Pending',
+        status: 'Unassigned',
         booking: null,
         file: 'toll_receipt.pdf',
         date: '2024-01-15',
@@ -31,7 +31,7 @@ const mockExpenses = [
         id: 'EXP003',
         type: 'Ticket',
         amount: 150.00,
-        status: 'Pending',
+        status: 'Collected',
         booking: null,
         file: 'parking_ticket.jpg',
         date: '2024-01-17',
@@ -43,7 +43,7 @@ const mockExpenses = [
         id: 'EXP004',
         type: 'Fuel',
         amount: 85.75,
-        status: 'Pending',
+        status: 'Disputed',
         booking: null,
         file: 'gas_receipt.pdf',
         date: '2024-01-18',
@@ -55,7 +55,7 @@ const mockExpenses = [
         id: 'EXP005',
         type: 'Toll',
         amount: 12.25,
-        status: 'Pending',
+        status: 'Unassigned',
         booking: null,
         file: 'toll_receipt2.pdf',
         date: '2024-01-19',
@@ -72,7 +72,8 @@ const mockBookings = [
     { value: 'BK004', label: 'Booking BK004 - Nissan Altima', date: '2024-01-18', customer: 'Sarah Wilson' },
 ]
 
-const EXPENSE_TYPES = ['Toll', 'Ticket', 'Cleaning', 'Fuel', 'Maintenance', 'Other']
+const EXPENSE_TYPES = ['Toll', 'Ticket', 'Cleaning Fees', 'Fuel', 'Maintenance']
+
 
 // Mock OCR detection results
 const mockOCRResults = {
@@ -86,7 +87,7 @@ const Expenses = () => {
     const [assignDialog, setAssignDialog] = useState(false)
     const [selectedExpense, setSelectedExpense] = useState(null)
     const [selectedBooking, setSelectedBooking] = useState('')
-    
+
     // New upload process state
     const [uploadDialog, setUploadDialog] = useState(false)
     const [currentStep, setCurrentStep] = useState(0)
@@ -103,6 +104,11 @@ const Expenses = () => {
         startDate: null,
         endDate: null,
     })
+
+    const expenseTypeOptions = [
+        { value: '', label: 'All Types' },
+        ...EXPENSE_TYPES.map(type => ({ value: type, label: type }))
+    ]
     const [searchResults, setSearchResults] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [noteText, setNoteText] = useState('')
@@ -120,9 +126,9 @@ const Expenses = () => {
 
     const handleAssignSubmit = () => {
         if (selectedExpense && selectedBooking) {
-            setExpenses(prev => 
-                prev.map(exp => 
-                    exp.id === selectedExpense.id 
+            setExpenses(prev =>
+                prev.map(exp =>
+                    exp.id === selectedExpense.id
                         ? { ...exp, booking: selectedBooking, status: 'Assigned' }
                         : exp
                 )
@@ -177,7 +183,7 @@ const Expenses = () => {
 
     const processFiles = (files) => {
         setProcessingFiles(files.map(file => ({ file, status: 'processing' })))
-        
+
         // Simulate OCR processing
         files.forEach((file, index) => {
             setTimeout(() => {
@@ -201,9 +207,9 @@ const Expenses = () => {
                     status: 'pending_confirmation'
                 }])
 
-                setProcessingFiles(prev => 
-                    prev.map(item => 
-                        item.file === file 
+                setProcessingFiles(prev =>
+                    prev.map(item =>
+                        item.file === file
                             ? { ...item, status: 'completed' }
                             : item
                     )
@@ -293,7 +299,7 @@ const Expenses = () => {
             const bookingDate = new Date(booking.date)
             const matchesDate = bookingDate >= searchStart && bookingDate <= searchEnd
             const matchesQuery = booking.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                booking.customer.toLowerCase().includes(searchQuery.toLowerCase())
+                booking.customer.toLowerCase().includes(searchQuery.toLowerCase())
             return matchesDate || matchesQuery
         })
 
@@ -301,9 +307,9 @@ const Expenses = () => {
     }
 
     const handleAssignFromSearch = (bookingId) => {
-        setExpenses(prev => 
-            prev.map(exp => 
-                exp.id === selectedExpense.id 
+        setExpenses(prev =>
+            prev.map(exp =>
+                exp.id === selectedExpense.id
                     ? { ...exp, booking: bookingId, status: 'Assigned' }
                     : exp
             )
@@ -319,9 +325,9 @@ const Expenses = () => {
     }
 
     const handleNoteSubmit = () => {
-        setExpenses(prev => 
-            prev.map(exp => 
-                exp.id === selectedExpense.id 
+        setExpenses(prev =>
+            prev.map(exp =>
+                exp.id === selectedExpense.id
                     ? { ...exp, notes: noteText }
                     : exp
             )
@@ -331,66 +337,56 @@ const Expenses = () => {
     }
 
     const handleMarkUnbillable = (expense) => {
-        setExpenses(prev => 
-            prev.map(exp => 
-                exp.id === expense.id 
+        setExpenses(prev =>
+            prev.map(exp =>
+                exp.id === expense.id
                     ? { ...exp, status: 'Unbillable' }
                     : exp
             )
         )
     }
 
-    // Filter pending expenses
-    const filteredPendingExpenses = useMemo(() => {
+    // Filter all expenses
+    const filteredExpenses = useMemo(() => {
         return expenses.filter(expense => {
-            if (expense.status !== 'Pending') return false
-            
             // Type filter
             if (pendingFilters.type && expense.type !== pendingFilters.type) return false
-            
+
             // Date filter
             if (pendingFilters.startDate) {
                 const expenseDate = new Date(expense.date)
                 const startDate = new Date(pendingFilters.startDate)
                 if (expenseDate < startDate) return false
             }
-            
+
             if (pendingFilters.endDate) {
                 const expenseDate = new Date(expense.date)
                 const endDate = new Date(pendingFilters.endDate)
                 if (expenseDate > endDate) return false
             }
-            
+
             return true
         })
     }, [expenses, pendingFilters])
 
+    const handleFilterChange = (key, value) => {
+        setPendingFilters(prev => ({ ...prev, [key]: value }))
+    }
+
     const columns = [
         {
-            header: 'Type',
+            header: 'Date',
+            accessor: 'date',
+            Cell: ({ row }) => new Date(row.date).toLocaleDateString(),
+        },
+        {
+            header: 'Customer',
+            accessor: 'customer',
+            Cell: ({ row }) => row.vendor || '-',
+        },
+        {
+            header: 'Booking Type',
             accessor: 'type',
-        },
-        {
-            header: 'Amount',
-            accessor: 'amount',
-            Cell: ({ row }) => `$${row.amount}`,
-        },
-        {
-            header: 'Status',
-            accessor: 'status',
-            Cell: ({ row }) => (
-                <span
-                    className={`${
-                        row.status === 'Assigned'
-                            ? 'text-emerald-600'
-                            : row.status === 'Unbillable'
-                            ? 'text-red-600'
-                            : 'text-amber-600'
-                    }`}
-                >
-                    {row.status}
-                </span>
-            ),
         },
         {
             header: 'Linked Booking',
@@ -398,8 +394,34 @@ const Expenses = () => {
             Cell: ({ row }) => row.booking || '-',
         },
         {
+            header: 'Amount',
+            accessor: 'amount',
+            Cell: ({ row }) => `$${row.amount}`,
+        },
+
+        {
             header: 'File',
             accessor: 'file',
+        },
+        {
+            header: 'Status',
+            accessor: 'status',
+            Cell: ({ row }) => (
+                <span
+                    className={`${row.status === 'Assigned'
+                        ? 'text-yellow-500'
+                        : row.status === 'Disputed'
+                            ? 'text-red-600'
+                            : row.status === 'Unassigned'
+                                ? 'text-amber-600'
+                                : row.status === 'Collected'
+                                    ? 'text-green-500'
+                                    : 'text-gray-600'
+                        }`}
+                >
+                    {row.status}
+                </span>
+            ),
         },
         {
             header: 'Actions',
@@ -410,12 +432,14 @@ const Expenses = () => {
                         size="sm"
                         icon={<HiOutlineEye />}
                         onClick={() => handleView(row)}
+                        title="View Details"
                     />
-                    {!row.booking && row.status === 'Pending' && (
+                    {!row.booking && row.status === 'Unassigned' && (
                         <Button
                             size="sm"
                             icon={<HiOutlineLink />}
                             onClick={() => handleAssign(row)}
+                            title="Assign Expense"
                         />
                     )}
                 </div>
@@ -507,7 +531,7 @@ const Expenses = () => {
                 <h3 className="text-lg font-semibold mb-2">Upload Expense Documents</h3>
                 <p className="text-gray-600">Upload CSV files, PDF receipts, or photo scans of expenses</p>
             </div>
-            
+
             <Upload
                 draggable
                 multiple
@@ -678,7 +702,7 @@ const Expenses = () => {
                                 <div key={expense.id} className="flex justify-between items-center p-3 border-l-4 border-primary bg-gray-50 rounded">
                                     <div>
                                         <div className="flex items-center space-x-2">
-                                                <span className="text-gray-600">{expense.confirmedType}</span>
+                                            <span className="text-gray-600">{expense.confirmedType}</span>
                                             <span className="font-medium">${expense.amount}</span>
                                         </div>
                                         <div className="text-sm text-gray-600">
@@ -686,7 +710,7 @@ const Expenses = () => {
                                         </div>
                                     </div>
                                     <span className="text-amber-600">
-                                        Pending
+                                        Unassigned
                                     </span>
                                 </div>
                             ))}
@@ -715,68 +739,16 @@ const Expenses = () => {
                 </Button>
             </div>
 
-            {/* Main Expenses Table */}
+            {/* Filters */}
             <Card>
-                <div className="p-4 border-b">
-                    <h5 className="font-semibold">All Expenses</h5>
-                </div>
-                <Table>
-                    <Table.THead>
-                        <Table.Tr>
-                            {columns.map((column) => (
-                                <Table.Th key={column.accessor}>
-                                    <div className="flex items-center justify-between space-x-2">
-                                        <span>{column.header}</span>
-                                    </div>
-                                </Table.Th>
-                            ))}
-                        </Table.Tr>
-                    </Table.THead>
-                    <Table.TBody>
-                        {expenses.map((expense) => (
-                            <Table.Tr key={expense.id}>
-                                {columns.map((column) => (
-                                    <Table.Td key={column.accessor}>
-                                        {column.Cell ? 
-                                            column.Cell({ row: expense }) : 
-                                            expense[column.accessor]
-                                        }
-                                    </Table.Td>
-                                ))}
-                            </Table.Tr>
-                        ))}
-                    </Table.TBody>
-                </Table>
-            </Card>
-
-            {/* Pending Expenses Assignment Section */}
-            <Card>
-                <div className="p-4 border-b">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h5 className="font-semibold">Pending Expenses Assignment</h5>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Manually assign unmatched expenses to reservations
-                            </p>
-                        </div>
-                        <span className="text-amber-600">
-                            {filteredPendingExpenses.length} Pending
-                        </span>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="p-4 border-b">
+                <div className="p-4">
                     <div className="flex flex-wrap gap-4 items-end">
                         <div className="flex-1 min-w-[200px]">
                             <label className="block text-sm font-medium mb-1">Filter by Type</label>
                             <Select
-                                value={pendingFilters.type}
-                                onChange={(value) => setPendingFilters(prev => ({ ...prev, type: value }))}
-                                options={[
-                                    { value: '', label: 'All Types' },
-                                    ...EXPENSE_TYPES.map(type => ({ value: type, label: type }))
-                                ]}
+                                options={expenseTypeOptions}
+                                value={expenseTypeOptions.find(option => option.value === pendingFilters.type)}
+                                onChange={(option) => handleFilterChange('type', option?.value || '')}
                                 placeholder="Select type"
                             />
                         </div>
@@ -784,7 +756,7 @@ const Expenses = () => {
                             <label className="block text-sm font-medium mb-1">Start Date</label>
                             <DatePicker
                                 value={pendingFilters.startDate}
-                                onChange={(date) => setPendingFilters(prev => ({ ...prev, startDate: date }))}
+                                onChange={(date) => handleFilterChange('startDate', date)}
                                 placeholder="Start date"
                             />
                         </div>
@@ -792,7 +764,7 @@ const Expenses = () => {
                             <label className="block text-sm font-medium mb-1">End Date</label>
                             <DatePicker
                                 value={pendingFilters.endDate}
-                                onChange={(date) => setPendingFilters(prev => ({ ...prev, endDate: date }))}
+                                onChange={(date) => handleFilterChange('endDate', date)}
                                 placeholder="End date"
                             />
                         </div>
@@ -804,19 +776,54 @@ const Expenses = () => {
                             Clear
                         </Button>
                     </div>
+                    <div className="flex justify-between items-center mt-4">
+                        <p className="text-sm text-gray-600">
+                            Showing {filteredExpenses.length} of {expenses.length} expenses
+                        </p>
+                    </div>
                 </div>
+            </Card>
 
-                {/* Pending Expenses Table */}
-                {filteredPendingExpenses.length > 0 ? (
-                    <Table columns={pendingColumns} data={filteredPendingExpenses} />
+            {/* Main Expenses Table */}
+            <Card>
+                {filteredExpenses.length > 0 ? (
+                    <Table>
+                        <Table.THead>
+                            <Table.Tr>
+                                {columns.map((column) => (
+                                    <Table.Th key={column.accessor}>
+                                        <div className="flex items-center justify-between space-x-2">
+                                            <span>{column.header}</span>
+                                        </div>
+                                    </Table.Th>
+                                ))}
+                            </Table.Tr>
+                        </Table.THead>
+                        <Table.TBody>
+                            {filteredExpenses.map((expense) => (
+                                <Table.Tr key={expense.id}>
+                                    {columns.map((column) => (
+                                        <Table.Td key={column.accessor}>
+                                            {column.Cell ?
+                                                column.Cell({ row: expense }) :
+                                                expense[column.accessor]
+                                            }
+                                        </Table.Td>
+                                    ))}
+                                </Table.Tr>
+                            ))}
+                        </Table.TBody>
+                    </Table>
                 ) : (
                     <div className="p-8 text-center text-gray-500">
-                        <HiOutlineCheckCircle className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <p className="text-lg font-medium">No pending expenses found</p>
-                        <p className="text-sm">All expenses have been assigned or processed</p>
+                        <HiOutlineFilter className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <p className="text-lg font-medium">No expenses found</p>
+                        <p className="text-sm">Try adjusting your filter criteria</p>
                     </div>
                 )}
             </Card>
+
+
 
             {/* Upload Process Dialog */}
             <Dialog
@@ -934,7 +941,7 @@ const Expenses = () => {
                                 {selectedExpense.type} - ${selectedExpense.amount} ({new Date(selectedExpense.date).toLocaleDateString()})
                             </p>
                         </div>
-                        
+
                         <div>
                             <label className="block text-sm font-medium mb-2">Note</label>
                             <textarea

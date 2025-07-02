@@ -24,6 +24,16 @@ const fleetBoldNavigationConfig = [
         subMenu: [],
     },
     {
+        key: 'fleetBold.vehicles',
+        path: `${FLEETBOLD_PREFIX_PATH}/vehicles`,
+        title: 'Vehicles',
+        translateKey: 'nav.fleetBold.vehicles',
+        icon: 'vehicles',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [ADMIN, USER],
+        subMenu: [],
+    },
+    {
         key: 'fleetBold.reservations',
         path: `${FLEETBOLD_PREFIX_PATH}/reservations`,
         title: 'Reservations',

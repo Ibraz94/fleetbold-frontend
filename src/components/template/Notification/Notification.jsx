@@ -29,19 +29,19 @@ const _Notification = ({ className }) => {
 
     const navigate = useNavigate()
 
-    const getNotificationCount = async () => {
-        const resp = await apiGetNotificationCount()
-        if (resp.count > 0) {
-            setNoResult(false)
-            setUnreadNotification(true)
-        } else {
-            setNoResult(true)
-        }
-    }
+    // const getNotificationCount = async () => {
+    //     const resp = await apiGetNotificationCount()
+    //     if (resp.count > 0) {
+    //         setNoResult(false)
+    //         setUnreadNotification(true)
+    //     } else {
+    //         setNoResult(true)
+    //     }
+    // }
 
-    useEffect(() => {
-        getNotificationCount()
-    }, [])
+    // useEffect(() => {
+    //     getNotificationCount()
+    // }, [])
 
     const onNotificationOpen = async () => {
         if (notificationList.length === 0) {
