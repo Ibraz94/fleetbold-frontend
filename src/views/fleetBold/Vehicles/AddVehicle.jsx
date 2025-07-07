@@ -4,11 +4,14 @@ import { Card, Button, Input, Select, DatePicker, Checkbox, Tabs } from '@/compo
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
+import { apiCreateVehicle } from '@/services/vehiclesServices'
+import { toast } from '@/components/ui/toast'
 
 const { TabNav, TabList, TabContent } = Tabs
 
 const AddVehicle = () => {
     const navigate = useNavigate()
+    const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         // Basic Information
         license_plate: '',
@@ -97,10 +100,57 @@ const AddVehicle = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        // TODO: Implement API call to create vehicle
-        console.log('Form Data:', formData)
+        setLoading(true)
+        
+        try {
+            // Prepare the data for API call
+            const vehicleData = {
+                ...formData,
+                // Convert date strings to proper date format if needed
+                registration_expires_at: formData.registration_expires_at ? new Date(formData.registration_expires_at).toISOString() : null,
+                insurance_expires_at: formData.insurance_expires_at ? new Date(formData.insurance_expires_at).toISOString() : null,
+                purchase_date: formData.purchase_date ? new Date(formData.purchase_date).toISOString() : null,
+                last_service_date: formData.last_service_date ? new Date(formData.last_service_date).toISOString() : null,
+                next_service_due_date: formData.next_service_due_date ? new Date(formData.next_service_due_date).toISOString() : null,
+                // Convert numeric fields
+                year: formData.year ? parseInt(formData.year) : null,
+                fuel_capacity: formData.fuel_capacity ? parseFloat(formData.fuel_capacity) : null,
+                seating_capacity: formData.seating_capacity ? parseInt(formData.seating_capacity) : null,
+                mileage: formData.mileage ? parseInt(formData.mileage) : null,
+                insurance_monthly_cost: formData.insurance_monthly_cost ? parseFloat(formData.insurance_monthly_cost) : null,
+                purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
+                current_value: formData.current_value ? parseFloat(formData.current_value) : null,
+                loan_balance: formData.loan_balance ? parseFloat(formData.loan_balance) : null,
+                loan_monthly_payment: formData.loan_monthly_payment ? parseFloat(formData.loan_monthly_payment) : null,
+                daily_rental_rate: formData.daily_rental_rate ? parseFloat(formData.daily_rental_rate) : null,
+                weekly_rental_rate: formData.weekly_rental_rate ? parseFloat(formData.weekly_rental_rate) : null,
+                monthly_rental_rate: formData.monthly_rental_rate ? parseFloat(formData.monthly_rental_rate) : null,
+                security_deposit: formData.security_deposit ? parseFloat(formData.security_deposit) : null,
+                last_service_mileage: formData.last_service_mileage ? parseInt(formData.last_service_mileage) : null,
+                next_service_due_mileage: formData.next_service_due_mileage ? parseInt(formData.next_service_due_mileage) : null,
+                // Parse JSON fields if they contain data
+                other_platform_ids: formData.other_platform_ids ? JSON.parse(formData.other_platform_ids || '{}') : {},
+                vehicle_features: formData.vehicle_features ? JSON.parse(formData.vehicle_features || '{}') : {},
+            }
+
+            await apiCreateVehicle(vehicleData)
+            
+            toast.push('Vehicle created successfully!', {
+                placement: 'top-end',
+                type: 'success'
+            })
+            
         // Navigate back to vehicles list after successful creation
         navigate('/fleetbold/vehicles')
+        } catch (error) {
+            console.error('Error creating vehicle:', error)
+            toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
+                placement: 'top-end',
+                type: 'error'
+            })
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleBack = () => {
@@ -580,15 +630,17 @@ const AddVehicle = () => {
                 </Card>
 
                 <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="plain" onClick={handleBack}>
+                    <Button variant="plain" onClick={handleBack} disabled={loading}>
                         Cancel
                     </Button>
                     <Button
                         variant="solid"
                         type="submit"
                         icon={<HiOutlineCheck />}
+                        loading={loading}
+                        disabled={loading}
                     >
-                        Add Vehicle
+                        {loading ? 'Creating...' : 'Add Vehicle'}
                     </Button>
                 </div>
             </Form>

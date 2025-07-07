@@ -2,7 +2,7 @@ import ApiService from './ApiService'
 
 export async function apiGetLogs(params) {
     return ApiService.fetchDataWithAxios({
-        url: '/api/logs',
+        url: 'auth/activity-logs',
         method: 'get',
         params,
     })

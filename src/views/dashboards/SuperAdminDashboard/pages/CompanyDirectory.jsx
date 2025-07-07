@@ -1,106 +1,154 @@
-import { useState } from 'react'
-import { Card, Button, Input, Select } from '@/components/ui'
-import { HiSearch, HiOfficeBuilding, HiEye, HiCog } from 'react-icons/hi'
+import { useState, useEffect } from 'react'
+import { Card, Button, Input, Select, Spinner } from '@/components/ui'
+import { HiSearch, HiOfficeBuilding, HiEye, HiCog, HiCheckCircle, HiXCircle } from 'react-icons/hi'
+import { apiGetCompanies, apiGetCompaniesStatistics, apiActivateCompany, apiDeactivateCompany } from '@/services/companiesService'
+import { toast } from '@/components/ui/toast'
 
 const CompanyDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [planFilter, setPlanFilter] = useState('all')
-
-    // Mock data for companies
-    const mockCompanies = [
-        {
-            id: 1,
-            name: 'TechCorp Inc.',
-            email: 'admin@techcorp.com',
-            planType: 'Premium',
-            activeUsers: 45,
-            totalUsers: 50,
-            totalVehicles: 120,
-            totalReservations: 2340,
-            status: 'Active',
-            lastActive: '2 hours ago',
-            monthlySpend: 2400
-        },
-        {
-            id: 2,
-            name: 'Global Fleet Solutions',
-            email: 'admin@globalfleet.com',
-            planType: 'Business',
-            activeUsers: 28,
-            totalUsers: 35,
-            totalVehicles: 85,
-            totalReservations: 1200,
-            status: 'Active',
-            lastActive: '1 day ago',
-            monthlySpend: 1800
-        },
-        {
-            id: 3,
-            name: 'Metro Transport Co.',
-            email: 'contact@metrotransport.com',
-            planType: 'Standard',
-            activeUsers: 12,
-            totalUsers: 15,
-            totalVehicles: 30,
-            totalReservations: 450,
-            status: 'Suspended',
-            lastActive: '1 week ago',
-            monthlySpend: 800
-        },
-        {
-            id: 4,
-            name: 'Logistics Plus',
-            email: 'info@logisticsplus.com',
-            planType: 'Enterprise',
-            activeUsers: 89,
-            totalUsers: 100,
-            totalVehicles: 250,
-            totalReservations: 5600,
-            status: 'Active',
-            lastActive: '30 minutes ago',
-            monthlySpend: 4200
-        },
-        {
-            id: 5,
-            name: 'City Delivery Services',
-            email: 'admin@citydelivery.com',
-            planType: 'Business',
-            activeUsers: 22,
-            totalUsers: 25,
-            totalVehicles: 45,
-            totalReservations: 890,
-            status: 'Trial',
-            lastActive: '3 hours ago',
-            monthlySpend: 0
-        }
-    ]
-
-    const filteredCompanies = mockCompanies.filter(company => {
-        const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            company.email.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesStatus = statusFilter === 'all' || company.status.toLowerCase() === statusFilter.toLowerCase()
-        const matchesPlan = planFilter === 'all' || company.planType.toLowerCase() === planFilter.toLowerCase()
-        return matchesSearch && matchesStatus && matchesPlan
+    const [companies, setCompanies] = useState([])
+    const [statistics, setStatistics] = useState({})
+    const [loading, setLoading] = useState(true)
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 20,
+        total: 0
     })
 
-    const getStatusColor = (status) => {
-        switch (status.toLowerCase()) {
-            case 'active': return 'text-green-600'
-            case 'suspended': return 'text-red-600'
-            case 'trial': return 'text-blue-600'
-            default: return 'text-gray-600'
+    // Load companies data
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true)
+            await Promise.all([
+                fetchCompanies(),
+                fetchStatistics()
+            ])
+            setLoading(false)
+        }
+        loadData()
+    }, [])
+
+    // Fetch companies data
+    const fetchCompanies = async (page = 1, pageSize = 20) => {
+        try {
+            const response = await apiGetCompanies({
+                page,
+                per_page: pageSize
+            })
+            console.log('Companies response:', response) // Debug log
+            setCompanies(response.companies || [])
+            setPagination(prev => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0
+            }))
+        } catch (error) {
+            console.error('Error fetching companies:', error)
+            toast.push(error.response?.data?.message || 'Failed to fetch companies', {
+                placement: 'top-end',
+                type: 'error'
+            })
         }
     }
 
+    // Fetch statistics
+    const fetchStatistics = async () => {
+        try {
+            const response = await apiGetCompaniesStatistics()
+            console.log('Statistics response:', response) // Debug log
+            setStatistics(response)
+        } catch (error) {
+            console.error('Error fetching statistics:', error)
+            // Don't show error toast for statistics if it fails - just log it
+            console.log('Statistics API might not be implemented yet')
+        }
+    }
+
+    // Handle company activation/deactivation
+    const handleActivateCompany = async (companyId) => {
+        try {
+            await apiActivateCompany(companyId)
+            toast.push('Company activated successfully!', {
+                placement: 'top-end',
+                type: 'success'
+            })
+            fetchCompanies()
+        } catch (error) {
+            console.error('Error activating company:', error)
+            toast.push(error.response?.data?.message || 'Failed to activate company', {
+                placement: 'top-end',
+                type: 'error'
+            })
+        }
+    }
+
+    const handleDeactivateCompany = async (companyId) => {
+        if (window.confirm('Are you sure you want to deactivate this company?')) {
+            try {
+                await apiDeactivateCompany(companyId)
+                toast.push('Company deactivated successfully!', {
+                    placement: 'top-end',
+                    type: 'success'
+                })
+                fetchCompanies()
+            } catch (error) {
+                console.error('Error deactivating company:', error)
+                toast.push(error.response?.data?.message || 'Failed to deactivate company', {
+                    placement: 'top-end',
+                    type: 'error'
+                })
+            }
+        }
+    }
+
+    const filteredCompanies = companies.filter(company => {
+        const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            company.email.toLowerCase().includes(searchTerm.toLowerCase())
+        const status = company.is_active ? 'active' : 'inactive'
+        const matchesStatus = statusFilter === 'all' || status === statusFilter
+        const matchesPlan = planFilter === 'all' || company.subscription_plan?.toLowerCase() === planFilter.toLowerCase()
+        return matchesSearch && matchesStatus && matchesPlan
+    })
+
+    const getStatusColor = (isActive) => {
+        return isActive ? 'text-green-600' : 'text-red-600'
+    }
+
+    const getStatusText = (isActive) => {
+        return isActive ? 'Active' : 'Inactive'
+    }
+
     const getPlanColor = (plan) => {
+        if (!plan) return 'text-gray-600'
         switch (plan.toLowerCase()) {
             case 'enterprise': return 'text-purple-600'
             case 'premium': return 'text-indigo-600'
             case 'business': return 'text-blue-600'
             case 'standard': return 'text-gray-600'
-            default: return 'bg-gray-100 text-gray-800'
+            default: return 'text-gray-600'
         }
+    }
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A'
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffTime = Math.abs(now - date)
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        if (diffDays === 1) return '1 day ago'
+        if (diffDays < 30) return `${diffDays} days ago`
+        return date.toLocaleDateString()
+    }
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner size="lg" />
+            </div>
+        )
     }
 
     return (
@@ -137,8 +185,7 @@ const CompanyDirectory = () => {
                     >
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="trial">Trial</option>
+                        <option value="inactive">Inactive</option>
                     </Select>
                     <Select
                         value={planFilter}
@@ -179,19 +226,16 @@ const CompanyDirectory = () => {
                                     Plan
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
-                                    Users
+                                    Fleet Size
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
-                                    Vehicles
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
-                                    Monthly Spend
+                                    Phone
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
                                     Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
-                                    Last Active
+                                    Created
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase tracking-wider">
                                     Actions
@@ -199,48 +243,74 @@ const CompanyDirectory = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                            {filteredCompanies.map((company) => (
-                                <tr key={company.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div className="text-sm font-medium text-black dark:text-white">{company.name}</div>
-                                            <div className="text-sm text-gray-400">{company.email}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={getPlanColor(company.planType)}>
-                                            {company.planType}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                                        {company.activeUsers} / {company.totalUsers}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                                        {company.totalVehicles}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
-                                        ${company.monthlySpend.toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={getStatusColor(company.status)}>
-                                            {company.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                        {company.lastActive}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <Button size="xs" variant="outline" icon={<HiEye />}>
-                                                View
-                                            </Button>
-                                            <Button size="xs" variant="outline" icon={<HiCog />}>
-                                                Manage
-                                            </Button>
-                                        </div>
+                            {filteredCompanies.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                                        No companies found matching your criteria.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredCompanies.map((company) => (
+                                    <tr key={company.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div>
+                                                <div className="text-sm font-medium text-black dark:text-white">{company.name}</div>
+                                                <div className="text-sm text-gray-400">{company.email}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={getPlanColor(company.subscription_plan)}>
+                                                {company.subscription_plan ? company.subscription_plan.charAt(0).toUpperCase() + company.subscription_plan.slice(1) : 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                                            {company.fleet_size || 0}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-black dark:text-white">
+                                            {company.phone || 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={getStatusColor(company.is_active)}>
+                                                {getStatusText(company.is_active)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                            {formatDate(company.created_at)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <Button size="xs" variant="outline" icon={<HiEye />}>
+                                                    View
+                                                </Button>
+                                                <Button size="xs" variant="outline" icon={<HiCog />}>
+                                                    Manage
+                                                </Button>
+                                                {company.is_active ? (
+                                                    <Button 
+                                                        size="xs" 
+                                                        variant="outline" 
+                                                        icon={<HiXCircle />}
+                                                        onClick={() => handleDeactivateCompany(company.id)}
+                                                        className="text-red-600 hover:text-red-700"
+                                                    >
+                                                        Deactivate
+                                                    </Button>
+                                                ) : (
+                                                    <Button 
+                                                        size="xs" 
+                                                        variant="outline" 
+                                                        icon={<HiCheckCircle />}
+                                                        onClick={() => handleActivateCompany(company.id)}
+                                                        className="text-green-600 hover:text-green-700"
+                                                    >
+                                                        Activate
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -66,7 +66,15 @@ function AuthProvider({ children }) {
         try {
             const resp = await apiSignIn(values)
             if (resp) {
-                handleSignIn({ accessToken: resp.token }, resp.user)
+                // Transform user data to match expected format
+                const transformedUser = {
+                    ...resp.user,
+                    authority: resp.user.role ? [resp.user.role] : [],
+                    userName: resp.user.name || resp.user.userName,
+                    avatar: resp.user.profile_image_url || resp.user.avatar || '',
+                }
+                
+                handleSignIn({ accessToken: resp.access_token }, transformedUser)
                 
                 // Simple redirect logic
                 const search = window.location.search
@@ -75,7 +83,7 @@ function AuthProvider({ children }) {
 
                 if (redirectUrl) {
                     navigatorRef.current?.navigate(redirectUrl)
-                } else if (resp.user?.authority?.includes(SUPER_ADMIN)) {
+                } else if (resp.user?.role === SUPER_ADMIN) {
                     navigatorRef.current?.navigate('/super-admin/dashboard')
                 } else {
                     navigatorRef.current?.navigate(appConfig.authenticatedEntryPath)

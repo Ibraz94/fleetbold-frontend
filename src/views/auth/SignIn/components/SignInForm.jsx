@@ -9,6 +9,8 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
+
+
 const validationSchema = z.object({
     email: z
         .string({ required_error: 'Please enter your email' })
@@ -23,27 +25,28 @@ const SignInForm = (props) => {
 
     const { disableSubmit = false, className, setMessage, passwordHint } = props
 
+    const { signIn } = useAuth()
+
     const {
         handleSubmit,
         formState: { errors },
         control,
     } = useForm({
         defaultValues: {
-            email: 'admin@fleetbold.com',
-            password: '123Qwe',
+            email: '',
+            password: '',
+            role: ''
         },
         resolver: zodResolver(validationSchema),
     })
 
-    const { signIn } = useAuth()
-
     const onSignIn = async (values) => {
-        const { email, password } = values
+        const { email, password, role } = values
 
         if (!disableSubmit) {
             setSubmitting(true)
 
-            const result = await signIn({ email, password })
+            const result = await signIn({ email, password, role })
 
             if (result?.status === 'failed') {
                 setMessage?.(result.message)

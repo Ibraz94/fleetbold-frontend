@@ -1,15 +1,65 @@
-import { Card, Button } from '@/components/ui'
+import { useState, useEffect } from 'react'
+import { Card, Button, Spinner } from '@/components/ui'
 import { HiShieldCheck, HiRefresh, HiOfficeBuilding, HiUsers, HiCurrencyDollar, HiExclamationCircle } from 'react-icons/hi'
+import { apiGetCompaniesStatistics, apiGetCompanies } from '@/services/companiesService'
 
 const SuperAdminDashboard = () => {
-    // Mock data for overview
+    // State for real statistics
+    const [statistics, setStatistics] = useState({
+        totalCompanies: 0,
+        activeUsers: 1289, // Keep mock for now
+        pendingIssues: 23, // Keep mock for now
+        monthlyRevenue: 145600 // Keep mock for now
+    })
+    const [loading, setLoading] = useState(true)
+
+    // Fetch statistics
+    useEffect(() => {
+        fetchStatistics()
+    }, [])
+
+    const fetchStatistics = async () => {
+        try {
+            // Try to get statistics from dedicated endpoint first
+            let totalCompanies = 0
+            
+            try {
+                const statsResponse = await apiGetCompaniesStatistics()
+                console.log('Dashboard statistics response:', statsResponse) // Debug log
+                totalCompanies = statsResponse.total_companies || 0
+            } catch (statsError) {
+                console.log('Statistics API not available, falling back to companies list')
+                
+                // Fallback: Get total from companies list pagination
+                const companiesResponse = await apiGetCompanies({ page: 1, per_page: 1 })
+                console.log('Companies list response for count:', companiesResponse) // Debug log
+                totalCompanies = companiesResponse.pagination?.total || 0
+            }
+
+            setStatistics(prev => ({
+                ...prev,
+                totalCompanies: totalCompanies,
+                // Keep other stats as default for now
+                activeUsers: prev.activeUsers,
+                pendingIssues: prev.pendingIssues,
+                monthlyRevenue: prev.monthlyRevenue
+            }))
+        } catch (error) {
+            console.error('Error fetching statistics:', error)
+            // Don't show error toast on dashboard - just log it
+            console.log('Using default values for statistics')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleRefresh = () => {
+        setLoading(true)
+        fetchStatistics()
+    }
+
+    // Mock data for overview (keeping for sections not yet integrated)
     const mockData = {
-        stats: {
-            totalCompanies: 247,
-            activeUsers: 1289,
-            pendingIssues: 23,
-            monthlyRevenue: 145600
-        },
         recentActivity: [
             {
                 id: 1,
@@ -96,7 +146,13 @@ const SuperAdminDashboard = () => {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="sm" icon={<HiRefresh />}>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        icon={<HiRefresh />}
+                        onClick={handleRefresh}
+                        loading={loading}
+                    >
                         Refresh
                     </Button>
                 </div>
@@ -111,7 +167,9 @@ const SuperAdminDashboard = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-400">Total Companies</p>
-                            <p className="text-2xl font-bold text-black dark:text-white">{mockData.stats.totalCompanies}</p>
+                            <p className="text-2xl font-bold text-black dark:text-white">
+                                {loading ? <Spinner size="sm" /> : statistics.totalCompanies}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -123,7 +181,9 @@ const SuperAdminDashboard = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-400">Active Users</p>
-                            <p className="text-2xl font-bold text-black dark:text-white">{mockData.stats.activeUsers}</p>
+                            <p className="text-2xl font-bold text-black dark:text-white">
+                                {loading ? <Spinner size="sm" /> : statistics.activeUsers}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -135,7 +195,9 @@ const SuperAdminDashboard = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-400">Monthly Revenue</p>
-                            <p className="text-2xl font-bold text-black dark:text-white">{formatCurrency(mockData.stats.monthlyRevenue)}</p>
+                            <p className="text-2xl font-bold text-black dark:text-white">
+                                {loading ? <Spinner size="sm" /> : formatCurrency(statistics.monthlyRevenue)}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -147,7 +209,9 @@ const SuperAdminDashboard = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-400">Pending Issues</p>
-                            <p className="text-2xl font-bold text-black dark:text-white">{mockData.stats.pendingIssues}</p>
+                            <p className="text-2xl font-bold text-black dark:text-white">
+                                {loading ? <Spinner size="sm" /> : statistics.pendingIssues}
+                            </p>
                         </div>
                     </div>
                 </Card>

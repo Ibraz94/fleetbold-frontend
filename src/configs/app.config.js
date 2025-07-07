@@ -1,10 +1,10 @@
 const appConfig = {
-    apiPrefix: '/api',
+    apiPrefix: 'https://35.194.199.13/api',
     authenticatedEntryPath: '/fleetbold/dashboard',
     unAuthenticatedEntryPath: '/sign-in',
     locale: 'en',
     accessTokenPersistStrategy: 'localStorage',
-    enableMock: true,
+    enableMock: false,
     activeNavTranslation: true,
 }
 
