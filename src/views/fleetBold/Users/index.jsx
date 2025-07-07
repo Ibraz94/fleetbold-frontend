@@ -1,33 +1,55 @@
-import { Card, Button, Table, Dialog, Select, Input, Tooltip, Switcher } from '@/components/ui'
-import { HiOutlineEye, HiOutlinePencil, HiOutlineTrash, HiOutlineMail, HiOutlineUserAdd } from 'react-icons/hi'
-import { useState } from 'react'
+import {
+    Card,
+    Button,
+    Table,
+    Dialog,
+    Select,
+    Input,
+    Tooltip,
+    Switcher,
+    Pagination,
+} from '@/components/ui'
+import {
+    HiOutlineEye,
+    HiOutlinePencil,
+    HiOutlineTrash,
+    HiOutlineMail,
+    HiOutlineUserAdd,
+} from 'react-icons/hi'
+import { useEffect, useState } from 'react'
+import {
+    apiDeleteuser,
+    apiEditRole,
+    apiFetchUsers,
+} from '@/services/UserService'
+import { toast } from '@/components/ui/toast'
 
-const mockUsers = [
-    {
-        id: 'USR001',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'Admin',
-        status: 'Active',
-        company: 'FleetBold Inc.',
-    },
-    {
-        id: 'USR002',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'Manager',
-        status: 'Active',
-        company: 'FleetBold Inc.',
-    },
-    {
-        id: 'USR003',
-        name: 'Mike Johnson',
-        email: 'mike@example.com',
-        role: 'Accountant',
-        status: 'Invited',
-        company: 'FleetBold Inc.',
-    },
-]
+// const mockUsers = [
+//     {
+//         id: 'USR001',
+//         name: 'John Doe',
+//         email: 'john@example.com',
+//         role: 'Admin',
+//         status: 'Active',
+//         company: 'FleetBold Inc.',
+//     },
+//     {
+//         id: 'USR002',
+//         name: 'Jane Smith',
+//         email: 'jane@example.com',
+//         role: 'Manager',
+//         status: 'Active',
+//         company: 'FleetBold Inc.',
+//     },
+//     {
+//         id: 'USR003',
+//         name: 'Mike Johnson',
+//         email: 'mike@example.com',
+//         role: 'Accountant',
+//         status: 'Invited',
+//         company: 'FleetBold Inc.',
+//     },
+// ]
 
 const roleOptions = [
     { value: 'Admin', label: 'Admin' },
@@ -86,8 +108,48 @@ const Users = () => {
     const [selectedRole, setSelectedRole] = useState('')
     const [inviteEmail, setInviteEmail] = useState('')
     const [inviteRole, setInviteRole] = useState('')
-    const [rolePermissions, setRolePermissions] = useState(defaultRolePermissions)
+    const [rolePermissions, setRolePermissions] = useState(
+        defaultRolePermissions,
+    )
     const [activeTab, setActiveTab] = useState('users')
+    const [usersData, setusersData] = useState([])
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    })
+
+    useEffect(() => {
+        const fetchUsers = async (page = 1, pageSize = 10) => {
+            try {
+                const response = await apiFetchUsers({
+                    page,
+                    per_page: pageSize,
+                })
+                console.log('Users response:', response) // Debug log
+                setusersData(response.users)
+                setPagination((prev) => ({
+                    ...prev,
+                    current: page,
+                    total: response.pagination?.total || 0,
+                }))
+            } catch (error) {
+                console.error('Error fetching vehicles:', error)
+                toast.push(
+                    error.response?.data?.message || 'Failed to fetch vehicles',
+                    {
+                        placement: 'top-end',
+                        type: 'error',
+                    },
+                )
+            }
+        }
+        fetchUsers()
+    }, [])
+
+    const handlePageChange = (page) => {
+        usersData(page, pagination.pageSize)
+    }
 
     const handleView = (user) => {
         setSelectedUser(user)
@@ -100,8 +162,27 @@ const Users = () => {
         setEditDialog(true)
     }
 
-    const handleRemove = (user) => {
+    const handleRemove = async (user) => {
         // In a real app, this would show a confirmation dialog and remove the user
+        try {
+            // const { id } = user;
+            await apiDeleteuser(user)
+            console.log("ID:");
+            toast.push('Role updated successfully!', {
+                placement: 'top-end',
+                type: 'success',
+            })
+        } catch (error) {
+            console.error("Error deleting user ", error)
+            toast.push(
+                error.response?.data?.message ||
+                    'Failed to delete user. Please try again.',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
         console.log('Remove user:', user)
     }
 
@@ -110,13 +191,33 @@ const Users = () => {
         console.log('Resend invite to:', user.email)
     }
 
-    const handleRoleChange = () => {
+    const handleRoleChange = async (selectedUser, role) => {
         // In a real app, this would update the user's role
+        try {
+            const { id } = selectedUser
+            await apiEditRole(id, role)
+
+            toast.push('Role updated successfully!', {
+                placement: 'top-end',
+                type: 'success',
+            })
+        } catch (error) {
+            console.error("Error updating user's role ", error)
+            toast.push(
+                error.response?.data?.message ||
+                    'Failed to update users role. Please try again.',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
         setEditDialog(false)
     }
 
     const handleInviteUser = () => {
         // In a real app, this would send an invitation
+
         console.log('Invite user:', inviteEmail, 'as', inviteRole)
         setInviteDialog(false)
         setInviteEmail('')
@@ -124,15 +225,15 @@ const Users = () => {
     }
 
     const handlePermissionChange = (role, module, permission, value) => {
-        setRolePermissions(prev => ({
+        setRolePermissions((prev) => ({
             ...prev,
             [role]: {
                 ...prev[role],
                 [module]: {
                     ...prev[role][module],
-                    [permission]: value
-                }
-            }
+                    [permission]: value,
+                },
+            },
         }))
     }
 
@@ -150,9 +251,7 @@ const Users = () => {
     }
 
     const getStatusBadgeColor = (status) => {
-        return status === 'Active' 
-            ? 'text-green-600' 
-            : 'text-yellow-600'
+        return status === 'Active' ? 'text-green-600' : 'text-yellow-600'
     }
 
     const columns = [
@@ -172,9 +271,7 @@ const Users = () => {
             header: 'Role',
             accessor: 'role',
             Cell: ({ row }) => (
-                <span className={getRoleBadgeColor(row.role)}>
-                    {row.role}
-                </span>
+                <span className={getRoleBadgeColor(row.role)}>{row.role}</span>
             ),
         },
         {
@@ -235,14 +332,14 @@ const Users = () => {
             <div className="flex justify-between items-center">
                 <h4 className="text-2xl font-semibold">User Management</h4>
                 <div className="flex space-x-2">
-                    <Button 
-                        variant="solid" 
+                    <Button
+                        variant="solid"
                         icon={<HiOutlineUserAdd />}
                         onClick={() => setInviteDialog(true)}
                     >
                         Invite User
                     </Button>
-                    <Button 
+                    <Button
                         variant="twoTone"
                         onClick={() => setRoleMatrixDialog(true)}
                     >
@@ -282,14 +379,13 @@ const Users = () => {
                         </Table.Tr>
                     </Table.THead>
                     <Table.TBody>
-                        {mockUsers.map((user) => (
-                            <Table.Tr key={user.id}>
+                        {usersData.map((user) => (
+                            <Table.Tr key={user.id || user.id + user.name}>
                                 {columns.map((column) => (
                                     <Table.Td key={column.accessor}>
-                                        {column.Cell ? 
-                                            column.Cell({ row: user }) : 
-                                            user[column.accessor]
-                                        }
+                                        {column.Cell
+                                            ? column.Cell({ row: user })
+                                            : user[column.accessor]}
                                     </Table.Td>
                                 ))}
                             </Table.Tr>
@@ -297,7 +393,18 @@ const Users = () => {
                     </Table.TBody>
                 </Table>
 
-                {mockUsers.length === 0 && (
+                {usersData.length > 0 && (
+                    <div className="mt-4 flex justify-end">
+                        <Pagination
+                            total={pagination.total}
+                            pageSize={pagination.pageSize}
+                            current={pagination.current}
+                            onChange={handlePageChange}
+                        />
+                    </div>
+                )}
+
+                {usersData.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                         No users found
                     </div>
@@ -357,31 +464,39 @@ const Users = () => {
                 onClose={() => setViewDialog(false)}
                 title="User Details"
             >
-                {selectedUser && (
+                {usersData && (
                     <div className="space-y-4">
                         <div>
                             <h6 className="font-medium text-gray-700">Name</h6>
-                            <p className="text-gray-900">{selectedUser.name}</p>
+                            <p className="text-gray-900">{usersData.name}</p>
                         </div>
                         <div>
                             <h6 className="font-medium text-gray-700">Email</h6>
-                            <p className="text-gray-900">{selectedUser.email}</p>
+                            <p className="text-gray-900">{usersData.email}</p>
                         </div>
                         <div>
                             <h6 className="font-medium text-gray-700">Role</h6>
-                            <span className={getRoleBadgeColor(selectedUser.role)}>
-                                {selectedUser.role}
+                            <span className={getRoleBadgeColor(usersData.role)}>
+                                {usersData.role}
                             </span>
                         </div>
                         <div>
-                            <h6 className="font-medium text-gray-700">Status</h6>
-                            <span className={getStatusBadgeColor(selectedUser.status)}>
-                                {selectedUser.status}
+                            <h6 className="font-medium text-gray-700">
+                                Status
+                            </h6>
+                            <span
+                                className={getStatusBadgeColor(
+                                    usersData.status,
+                                )}
+                            >
+                                {usersData.status}
                             </span>
                         </div>
                         <div>
-                            <h6 className="font-medium text-gray-700">Company</h6>
-                            <p className="text-gray-900">{selectedUser.company}</p>
+                            <h6 className="font-medium text-gray-700">
+                                Company
+                            </h6>
+                            <p className="text-gray-900">{usersData.company}</p>
                         </div>
                     </div>
                 )}
@@ -400,8 +515,12 @@ const Users = () => {
                             <p className="text-gray-900">{selectedUser.name}</p>
                         </div>
                         <div>
-                            <h6 className="font-medium text-gray-700">Current Role</h6>
-                            <span className={getRoleBadgeColor(selectedUser.role)}>
+                            <h6 className="font-medium text-gray-700">
+                                Current Role
+                            </h6>
+                            <span
+                                className={getRoleBadgeColor(selectedUser.role)}
+                            >
                                 {selectedUser.role}
                             </span>
                         </div>
@@ -424,7 +543,9 @@ const Users = () => {
                             </Button>
                             <Button
                                 variant="solid"
-                                onClick={handleRoleChange}
+                                onClick={() =>
+                                    handleRoleChange(selectedUser, selectedRole)
+                                }
                             >
                                 Update Role
                             </Button>
@@ -444,51 +565,98 @@ const Users = () => {
                     {/* Header */}
                     <div className="flex-shrink-0 pb-4 border-b border-gray-200">
                         <p className="text-sm text-gray-600">
-                            Configure permissions for each role across different modules.
+                            Configure permissions for each role across different
+                            modules.
                         </p>
                     </div>
-                    
+
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto py-4 space-y-6 max-h-[60vh]">
                         {roleOptions.map((role) => (
-                            <Card key={role.value} className="p-4 flex-shrink-0">
+                            <Card
+                                key={role.value}
+                                className="p-4 flex-shrink-0"
+                            >
                                 <h5 className="text-lg font-semibold mb-4 flex items-center sticky top-0 bg-white z-10 pb-2">
-                                    <span className={getRoleBadgeColor(role.value)}>
+                                    <span
+                                        className={getRoleBadgeColor(
+                                            role.value,
+                                        )}
+                                    >
                                         {role.label}
                                     </span>
                                     <span className="ml-2">Permissions</span>
                                 </h5>
-                                
+
                                 <div className="overflow-x-auto">
                                     <table className="w-full border-collapse min-w-[600px]">
                                         <thead>
                                             <tr className="border-b bg-gray-50">
-                                                <th className="text-left p-3 font-medium text-gray-700 min-w-[150px]">Module</th>
-                                                {permissions.map((permission) => (
-                                                    <th key={permission} className="text-center p-3 font-medium text-gray-700 min-w-[80px]">
-                                                        <Tooltip title={`${permission} permission allows users to ${permission.toLowerCase()} data in this module`}>
-                                                            <div className="cursor-help">{permission}</div>
-                                                        </Tooltip>
-                                                    </th>
-                                                ))}
+                                                <th className="text-left p-3 font-medium text-gray-700 min-w-[150px]">
+                                                    Module
+                                                </th>
+                                                {permissions.map(
+                                                    (permission) => (
+                                                        <th
+                                                            key={permission}
+                                                            className="text-center p-3 font-medium text-gray-700 min-w-[80px]"
+                                                        >
+                                                            <Tooltip
+                                                                title={`${permission} permission allows users to ${permission.toLowerCase()} data in this module`}
+                                                            >
+                                                                <div className="cursor-help">
+                                                                    {permission}
+                                                                </div>
+                                                            </Tooltip>
+                                                        </th>
+                                                    ),
+                                                )}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {modules.map((module, index) => (
-                                                <tr key={module.id} className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'} hover:bg-blue-25 transition-colors`}>
-                                                    <td className="p-3 font-medium text-gray-900">{module.name}</td>
-                                                    {permissions.map((permission) => (
-                                                        <td key={permission} className="text-center p-3">
-                                                            <div className="flex justify-center">
-                                                                <Switcher
-                                                                    checked={rolePermissions[role.value]?.[module.id]?.[permission] || false}
-                                                                    onChange={(checked) => 
-                                                                        handlePermissionChange(role.value, module.id, permission, checked)
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        </td>
-                                                    ))}
+                                                <tr
+                                                    key={module.id}
+                                                    className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'} hover:bg-blue-25 transition-colors`}
+                                                >
+                                                    <td className="p-3 font-medium text-gray-900">
+                                                        {module.name}
+                                                    </td>
+                                                    {permissions.map(
+                                                        (permission) => (
+                                                            <td
+                                                                key={permission}
+                                                                className="text-center p-3"
+                                                            >
+                                                                <div className="flex justify-center">
+                                                                    <Switcher
+                                                                        checked={
+                                                                            rolePermissions[
+                                                                                role
+                                                                                    .value
+                                                                            ]?.[
+                                                                                module
+                                                                                    .id
+                                                                            ]?.[
+                                                                                permission
+                                                                            ] ||
+                                                                            false
+                                                                        }
+                                                                        onChange={(
+                                                                            checked,
+                                                                        ) =>
+                                                                            handlePermissionChange(
+                                                                                role.value,
+                                                                                module.id,
+                                                                                permission,
+                                                                                checked,
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                        ),
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -497,7 +665,7 @@ const Users = () => {
                             </Card>
                         ))}
                     </div>
-                    
+
                     {/* Footer */}
                     <div className="flex-shrink-0 pt-4 border-t border-gray-200">
                         <div className="flex justify-end space-x-2">
@@ -521,4 +689,4 @@ const Users = () => {
     )
 }
 
-export default Users 
+export default Users

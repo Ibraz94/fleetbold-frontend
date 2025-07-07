@@ -3,8 +3,10 @@ import { Card, Button, Input, Select, Spinner } from '@/components/ui'
 import { HiSearch, HiOfficeBuilding, HiEye, HiCog, HiCheckCircle, HiXCircle } from 'react-icons/hi'
 import { apiGetCompanies, apiGetCompaniesStatistics, apiActivateCompany, apiDeactivateCompany } from '@/services/companiesService'
 import { toast } from '@/components/ui/toast'
+import { useNavigate } from 'react-router'
 
 const CompanyDirectory = () => {
+    const navigate = useNavigate()
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [planFilter, setPlanFilter] = useState('all')
@@ -51,6 +53,11 @@ const CompanyDirectory = () => {
                 type: 'error'
             })
         }
+    }
+
+    // Add Companies
+    const handleAddCompany = () => {
+        navigate('/super-admin/company/add')
     }
 
     // Fetch statistics
@@ -210,7 +217,7 @@ const CompanyDirectory = () => {
                             <h3 className="text-lg font-semibold">Companies</h3>
                             <p className="text-sm text-gray-400">{filteredCompanies.length} companies found</p>
                         </div>
-                        <Button size="sm">
+                        <Button size="sm" onClick={handleAddCompany}>
                             Add Company
                         </Button>
                     </div>

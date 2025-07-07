@@ -57,6 +57,15 @@ const superAdminRoute = [
             pageContainerType: 'contained',
         },
     },
+    {
+        key: 'addCompanies',
+        path: `${SUPER_ADMIN_PREFIX_PATH}/company/add`,
+        component: lazy(() => import('@/views/dashboards/SuperAdminDashboard/pages/AddCompanies')),
+        authority: [SUPER_ADMIN],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
 ]
 
 export default superAdminRoute 
