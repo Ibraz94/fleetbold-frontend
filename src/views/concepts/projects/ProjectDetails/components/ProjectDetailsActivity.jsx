@@ -15,9 +15,18 @@ const ProjectDetailsActivity = () => {
 
     const getLogs = async () => {
         setIsLoading(true)
-        const resp = await apiGetLogs({ activityIndex })
-        setActivities((prevActivities) => [...prevActivities, ...resp.data])
-        seLoadable(resp.loadable)
+        try {
+            const resp = await apiGetLogs({ activityIndex })
+            
+            // Ensure resp.data is an array before spreading
+            const newActivities = Array.isArray(resp.data) ? resp.data : []
+            setActivities((prevActivities) => [...prevActivities, ...newActivities])
+            seLoadable(resp.loadable ?? true)
+        } catch (error) {
+            console.error('Error fetching logs:', error)
+            // Handle error gracefully - don't update activities on error
+            seLoadable(false)
+        }
         setIsLoading(false)
     }
 

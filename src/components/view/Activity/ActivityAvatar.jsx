@@ -3,12 +3,16 @@ import Avatar from '@/components/ui/Avatar'
 import acronym from '@/utils/acronym'
 import classNames from '@/utils/classNames'
 import useRandomBgColor from '@/utils/hooks/useRandomBgColor'
-import { TbUser, TbTag, TbFileText, TbTicket, TbRefresh } from 'react-icons/tb'
+import { TbUser, TbTag, TbFileText, TbTicket, TbRefresh, TbLogin, TbLogout, TbUserPlus, TbUserEdit } from 'react-icons/tb'
 import {
     ADD_TAGS_TO_TICKET,
     ADD_FILES_TO_TICKET,
     UPDATE_TICKET,
     CREATE_TICKET,
+    SIGN_IN,
+    SIGN_OUT,
+    USER_CREATED,
+    USER_UPDATED,
     avatarType,
     iconType,
 } from './constants'
@@ -23,6 +27,14 @@ const Icon = ({ type }) => {
             return <TbRefresh />
         case CREATE_TICKET:
             return <TbTicket />
+        case SIGN_IN:
+            return <TbLogin />
+        case SIGN_OUT:
+            return <TbLogout />
+        case USER_CREATED:
+            return <TbUserPlus />
+        case USER_UPDATED:
+            return <TbUserEdit />
         default:
             return <TbUser />
     }

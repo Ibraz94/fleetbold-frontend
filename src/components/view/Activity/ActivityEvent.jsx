@@ -311,8 +311,63 @@ const ActivityEvent = ({ data, compact }) => {
                     </span>
                 </div>
             )
+        case 'SIGN_IN':
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    <HighlightedText>{data.userName} </HighlightedText>
+                    <span className="mx-1">signed in</span>
+                    {data.ipAddress && (
+                        <>
+                            <span className="mx-1">from</span>
+                            <HighlightedText>{data.ipAddress}</HighlightedText>
+                        </>
+                    )}
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                        <UnixDateTime value={data.dateTime} />
+                    </span>
+                </div>
+            )
+        case 'SIGN_OUT':
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    <HighlightedText>{data.userName} </HighlightedText>
+                    <span className="mx-1">signed out</span>
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                        <UnixDateTime value={data.dateTime} />
+                    </span>
+                </div>
+            )
+        case 'USER_CREATED':
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    <HighlightedText>{data.userName} </HighlightedText>
+                    <span className="mx-1">was created</span>
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                        <UnixDateTime value={data.dateTime} />
+                    </span>
+                </div>
+            )
+        case 'USER_UPDATED':
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    <HighlightedText>{data.userName} </HighlightedText>
+                    <span className="mx-1">profile was updated</span>
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                        <UnixDateTime value={data.dateTime} />
+                    </span>
+                </div>
+            )
         default:
-            return null
+            // Handle any unknown activity types with a generic format
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    <HighlightedText>{data.userName || 'Unknown User'} </HighlightedText>
+                    <span className="mx-1">{data.description || 'performed an activity'}</span>
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                        <UnixDateTime value={data.dateTime} />
+                    </span>
+                </div>
+            )
     }
 }
 

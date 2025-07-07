@@ -7,6 +7,10 @@ import {
     ADD_TAGS_TO_TICKET,
     ADD_FILES_TO_TICKET,
     CREATE_TICKET,
+    SIGN_IN,
+    SIGN_OUT,
+    USER_CREATED,
+    USER_UPDATED,
 } from '@/components/view/Activity/constants'
 import { TbFilter, TbCheck } from 'react-icons/tb'
 
@@ -16,6 +20,10 @@ const filterItems = [
     { label: 'New ticket', value: CREATE_TICKET },
     { label: 'Add tags', value: ADD_TAGS_TO_TICKET },
     { label: 'Add files', value: ADD_FILES_TO_TICKET },
+    { label: 'Sign in', value: SIGN_IN },
+    { label: 'Sign out', value: SIGN_OUT },
+    { label: 'User created', value: USER_CREATED },
+    { label: 'User updated', value: USER_UPDATED },
 ]
 
 const LogAction = ({

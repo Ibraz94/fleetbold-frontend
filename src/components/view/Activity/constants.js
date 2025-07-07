@@ -6,10 +6,30 @@ export const COMMENT_MENTION = 'COMMENT-MENTION'
 export const ASSIGN_TICKET = 'ASSIGN-TICKET'
 export const CREATE_TICKET = 'CREATE-TICKET'
 
+// Real API activity types
+export const SIGN_IN = 'SIGN_IN'
+export const SIGN_OUT = 'SIGN_OUT'
+export const USER_CREATED = 'USER_CREATED'
+export const USER_UPDATED = 'USER_UPDATED'
+export const GENERIC_ACTIVITY = 'GENERIC_ACTIVITY'
+
 export const avatarType = [
     UPDATE_TICKET,
     COMMENT,
     COMMENT_MENTION,
     ASSIGN_TICKET,
+    SIGN_IN,
+    SIGN_OUT,
+    USER_CREATED,
+    USER_UPDATED,
+    GENERIC_ACTIVITY,
 ]
-export const iconType = [ADD_TAGS_TO_TICKET, ADD_FILES_TO_TICKET, CREATE_TICKET]
+export const iconType = [
+    ADD_TAGS_TO_TICKET, 
+    ADD_FILES_TO_TICKET, 
+    CREATE_TICKET,
+    SIGN_IN,
+    SIGN_OUT,
+    USER_CREATED,
+    USER_UPDATED,
+]
