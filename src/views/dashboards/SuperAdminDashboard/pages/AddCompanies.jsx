@@ -98,7 +98,7 @@ const AddCompany = () => {
     }
 
     const handleBack = () => {
-        navigate('/fleetbold/vehicles')
+        navigate('/super-admin/companies')
     }
 
     const businessTypeOptions = [
