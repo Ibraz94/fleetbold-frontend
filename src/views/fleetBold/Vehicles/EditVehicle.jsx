@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { Card, Button, Input, Select, DatePicker, Checkbox,Tabs } from '@/components/ui'
+import { Card, Button, Input, Select, DatePicker, Checkbox, Tabs } from '@/components/ui'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
@@ -88,7 +88,7 @@ const EditVehicle = () => {
         try {
             setInitialLoading(true)
             const response = await apiGetVehicle(id)
-            
+
             // Populate form with existing data
             setFormData({
                 license_plate: response.license_plate || '',
@@ -131,7 +131,8 @@ const EditVehicle = () => {
                 monthly_rental_rate: response.monthly_rental_rate ? response.monthly_rental_rate.toString() : '',
                 security_deposit: response.security_deposit ? response.security_deposit.toString() : '',
                 vehicle_features: response.vehicle_features ? JSON.stringify(response.vehicle_features) : '',
-                notes: response.notes || ''
+                notes: response.notes || '',
+
             })
         } catch (error) {
             console.error('Error fetching vehicle details:', error)
@@ -168,7 +169,7 @@ const EditVehicle = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
-        
+
         try {
             // Prepare the data for API call
             const vehicleData = {
@@ -198,15 +199,17 @@ const EditVehicle = () => {
                 // Parse JSON fields if they contain data
                 other_platform_ids: formData.other_platform_ids ? JSON.parse(formData.other_platform_ids || '{}') : {},
                 vehicle_features: formData.vehicle_features ? JSON.parse(formData.vehicle_features || '{}') : {},
+                status: formData.status ? formData.status : '',
+                maintenance: formData.maintenance ? formData.maintenance : 0
             }
 
             await apiUpdateVehicle(id, vehicleData)
-            
+
             toast.push('Vehicle updated successfully!', {
                 placement: 'top-end',
                 type: 'success'
             })
-            
+
             // Navigate back to vehicle detail page
             navigate(`/fleetbold/vehicles/${id}`)
         } catch (error) {
@@ -250,11 +253,10 @@ const EditVehicle = () => {
         { value: 'cvt', label: 'CVT' }
     ]
 
-    const statusOptions = [
-        { value: 'active', label: 'Active' },
-        { value: 'maintenance', label: 'Maintenance' },
-        { value: 'inactive', label: 'Inactive' },
-        { value: 'sold', label: 'Sold' }
+    const status = [
+        { value: "active", label: 'active' },
+        { value: "inactive", label: "inactive" },
+        { value: "in-maintenance", label: "in-maintenance" }
     ]
 
     const titleStatusOptions = [
@@ -367,343 +369,343 @@ const EditVehicle = () => {
                                             onChange={(option) => setFormData(prev => ({ ...prev, vehicle_type: option?.value || '' }))}
                                         />
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="status" className="text-sm font-medium">status</label>
+                                        <Select
+                                            placeholder="Select vehicle status"
+                                            options={status}
+                                            value={status.find(option => option.value === formData.status)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || '' }))}
+                                        />
+                                    </div>
                                 </div>
                             </TabContent>
 
                             {/* Include all other tab content sections similar to AddVehicle */}
                             {/* For brevity, I'll just show the pattern - you would include all tabs */}
-                                                        <TabContent value="technical">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="engine_type" className="text-sm font-medium">Engine Type</label>
-                                                                    <Select
-                                                                        placeholder="Select engine type"
-                                                                        options={engineTypeOptions}
-                                                                        value={engineTypeOptions.find(option => option.value === formData.engine_type)}
-                                                                        onChange={(option) => setFormData(prev => ({ ...prev, engine_type: option?.value || '' }))}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="transmission_type" className="text-sm font-medium">Transmission Type</label>
-                                                                    <Select
-                                                                        placeholder="Select transmission type"
-                                                                        options={transmissionTypeOptions}
-                                                                        value={transmissionTypeOptions.find(option => option.value === formData.transmission_type)}
-                                                                        onChange={(option) => setFormData(prev => ({ ...prev, transmission_type: option?.value || '' }))}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="fuel_capacity" className="text-sm font-medium">Fuel Capacity (gallons)</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.1"
-                                                                        placeholder="e.g. 15.5"
-                                                                        value={formData.fuel_capacity}
-                                                                        onChange={handleInputChange('fuel_capacity')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="seating_capacity" className="text-sm font-medium">Seating Capacity</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        placeholder="e.g. 5"
-                                                                        value={formData.seating_capacity}
-                                                                        onChange={handleInputChange('seating_capacity')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="mileage" className="text-sm font-medium">Current Mileage</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        placeholder="e.g. 45000"
-                                                                        value={formData.mileage}
-                                                                        onChange={handleInputChange('mileage')}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
-                            
-                                                        <TabContent value="legal">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="registration_number" className="text-sm font-medium">Registration Number</label>
-                                                                    <Input
-                                                                        placeholder="Enter registration number"
-                                                                        value={formData.registration_number}
-                                                                        onChange={handleInputChange('registration_number')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="registration_expires_at" className="text-sm font-medium">Registration Expires</label>
-                                                                    <DatePicker
-                                                                        placeholder="Select expiration date"
-                                                                        value={formData.registration_expires_at}
-                                                                        onChange={handleDateChange('registration_expires_at')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="state_registered" className="text-sm font-medium">State Registered</label>
-                                                                    <Input
-                                                                        placeholder="e.g. CA, NY, TX"
-                                                                        value={formData.state_registered}
-                                                                        onChange={handleInputChange('state_registered')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="title_status" className="text-sm font-medium">Title Status</label>
-                                                                    <Select
-                                                                        placeholder="Select title status"
-                                                                        options={titleStatusOptions}
-                                                                        value={titleStatusOptions.find(option => option.value === formData.title_status)}
-                                                                        onChange={(option) => setFormData(prev => ({ ...prev, title_status: option?.value || '' }))}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
-                            
-                                                        <TabContent value="insurance">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="insurance_company" className="text-sm font-medium">Insurance Company</label>
-                                                                    <Input
-                                                                        placeholder="e.g. Geico, State Farm"
-                                                                        value={formData.insurance_company}
-                                                                        onChange={handleInputChange('insurance_company')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="insurance_policy_number" className="text-sm font-medium">Policy Number</label>
-                                                                    <Input
-                                                                        placeholder="Enter policy number"
-                                                                        value={formData.insurance_policy_number}
-                                                                        onChange={handleInputChange('insurance_policy_number')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="insurance_expires_at" className="text-sm font-medium">Insurance Expires</label>
-                                                                    <DatePicker
-                                                                        placeholder="Select expiration date"
-                                                                        value={formData.insurance_expires_at}
-                                                                        onChange={handleDateChange('insurance_expires_at')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="insurance_monthly_cost" className="text-sm font-medium">Monthly Insurance Cost</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 150.00"
-                                                                        value={formData.insurance_monthly_cost}
-                                                                        onChange={handleInputChange('insurance_monthly_cost')}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
-                            
-                                                        <TabContent value="financial">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="purchase_date" className="text-sm font-medium">Purchase Date</label>
-                                                                    <DatePicker
-                                                                        placeholder="Select purchase date"
-                                                                        value={formData.purchase_date}
-                                                                        onChange={handleDateChange('purchase_date')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="purchase_price" className="text-sm font-medium">Purchase Price</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 25000.00"
-                                                                        value={formData.purchase_price}
-                                                                        onChange={handleInputChange('purchase_price')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="current_value" className="text-sm font-medium">Current Value</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 22000.00"
-                                                                        value={formData.current_value}
-                                                                        onChange={handleInputChange('current_value')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="loan_balance" className="text-sm font-medium">Loan Balance</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 15000.00"
-                                                                        value={formData.loan_balance}
-                                                                        onChange={handleInputChange('loan_balance')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="loan_monthly_payment" className="text-sm font-medium">Monthly Loan Payment</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 450.00"
-                                                                        value={formData.loan_monthly_payment}
-                                                                        onChange={handleInputChange('loan_monthly_payment')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="current_location" className="text-sm font-medium">Current Location</label>
-                                                                    <Input
-                                                                        placeholder="e.g. Los Angeles, CA"
-                                                                        value={formData.current_location}
-                                                                        onChange={handleInputChange('current_location')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="status" className="text-sm font-medium">Status</label>
-                                                                    <Select
-                                                                        placeholder="Select vehicle status"
-                                                                        options={statusOptions}
-                                                                        value={statusOptions.find(option => option.value === formData.status)}
-                                                                        onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || 'active' }))}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="is_available_for_rental" className="text-sm font-medium">Available for Rental</label>
-                                                                    <Checkbox
-                                                                        checked={formData.is_available_for_rental}
-                                                                        onChange={handleCheckboxChange('is_available_for_rental')}
-                                                                    >
-                                                                        Available for rental
-                                                                    </Checkbox>
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
-                            
-                                                        <TabContent value="maintenance">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="last_service_date" className="text-sm font-medium">Last Service Date</label>
-                                                                    <DatePicker
-                                                                        placeholder="Select last service date"
-                                                                        value={formData.last_service_date}
-                                                                        onChange={handleDateChange('last_service_date')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="last_service_mileage" className="text-sm font-medium">Last Service Mileage</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        placeholder="e.g. 40000"
-                                                                        value={formData.last_service_mileage}
-                                                                        onChange={handleInputChange('last_service_mileage')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="next_service_due_date" className="text-sm font-medium">Next Service Due Date</label>
-                                                                    <DatePicker
-                                                                        placeholder="Select next service date"
-                                                                        value={formData.next_service_due_date}
-                                                                        onChange={handleDateChange('next_service_due_date')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="next_service_due_mileage" className="text-sm font-medium">Next Service Due Mileage</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        placeholder="e.g. 50000"
-                                                                        value={formData.next_service_due_mileage}
-                                                                        onChange={handleInputChange('next_service_due_mileage')}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
-                            
-                                                        <TabContent value="rental">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="daily_rental_rate" className="text-sm font-medium">Daily Rental Rate</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 65.00"
-                                                                        value={formData.daily_rental_rate}
-                                                                        onChange={handleInputChange('daily_rental_rate')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="weekly_rental_rate" className="text-sm font-medium">Weekly Rental Rate</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 400.00"
-                                                                        value={formData.weekly_rental_rate}
-                                                                        onChange={handleInputChange('weekly_rental_rate')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="monthly_rental_rate" className="text-sm font-medium">Monthly Rental Rate</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 1500.00"
-                                                                        value={formData.monthly_rental_rate}
-                                                                        onChange={handleInputChange('monthly_rental_rate')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="security_deposit" className="text-sm font-medium">Security Deposit</label>
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        placeholder="e.g. 500.00"
-                                                                        value={formData.security_deposit}
-                                                                        onChange={handleInputChange('security_deposit')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="turo_listing_id" className="text-sm font-medium">Turo Listing ID</label>
-                                                                    <Input
-                                                                        placeholder="Enter Turo listing ID"
-                                                                        value={formData.turo_listing_id}
-                                                                        onChange={handleInputChange('turo_listing_id')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="getaround_listing_id" className="text-sm font-medium">Getaround Listing ID</label>
-                                                                    <Input
-                                                                        placeholder="Enter Getaround listing ID"
-                                                                        value={formData.getaround_listing_id}
-                                                                        onChange={handleInputChange('getaround_listing_id')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="other_platform_ids" className="text-sm font-medium">Other Platform IDs</label>
-                                                                    <Input
-                                                                        placeholder="Enter other platform IDs (JSON format)"
-                                                                        value={formData.other_platform_ids}
-                                                                        onChange={handleInputChange('other_platform_ids')}
-                                                                    />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
+                            <TabContent value="technical">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="engine_type" className="text-sm font-medium">Engine Type</label>
+                                        <Select
+                                            placeholder="Select engine type"
+                                            options={engineTypeOptions}
+                                            value={engineTypeOptions.find(option => option.value === formData.engine_type)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, engine_type: option?.value || '' }))}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="transmission_type" className="text-sm font-medium">Transmission Type</label>
+                                        <Select
+                                            placeholder="Select transmission type"
+                                            options={transmissionTypeOptions}
+                                            value={transmissionTypeOptions.find(option => option.value === formData.transmission_type)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, transmission_type: option?.value || '' }))}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="fuel_capacity" className="text-sm font-medium">Fuel Capacity (gallons)</label>
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            placeholder="e.g. 15.5"
+                                            value={formData.fuel_capacity}
+                                            onChange={handleInputChange('fuel_capacity')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="seating_capacity" className="text-sm font-medium">Seating Capacity</label>
+                                        <Input
+                                            type="number"
+                                            placeholder="e.g. 5"
+                                            value={formData.seating_capacity}
+                                            onChange={handleInputChange('seating_capacity')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="mileage" className="text-sm font-medium">Current Mileage</label>
+                                        <Input
+                                            type="number"
+                                            placeholder="e.g. 45000"
+                                            value={formData.mileage}
+                                            onChange={handleInputChange('mileage')}
+                                        />
+                                    </div>
+                                </div>
+                            </TabContent>
+
+                            <TabContent value="legal">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="registration_number" className="text-sm font-medium">Registration Number</label>
+                                        <Input
+                                            placeholder="Enter registration number"
+                                            value={formData.registration_number}
+                                            onChange={handleInputChange('registration_number')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="registration_expires_at" className="text-sm font-medium">Registration Expires</label>
+                                        <DatePicker
+                                            placeholder="Select expiration date"
+                                            value={formData.registration_expires_at}
+                                            onChange={handleDateChange('registration_expires_at')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="state_registered" className="text-sm font-medium">State Registered</label>
+                                        <Input
+                                            placeholder="e.g. CA, NY, TX"
+                                            value={formData.state_registered}
+                                            onChange={handleInputChange('state_registered')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="title_status" className="text-sm font-medium">Title Status</label>
+                                        <Select
+                                            placeholder="Select title status"
+                                            options={titleStatusOptions}
+                                            value={titleStatusOptions.find(option => option.value === formData.title_status)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, title_status: option?.value || '' }))}
+                                        />
+                                    </div>
+                                </div>
+                            </TabContent>
+
+                            <TabContent value="insurance">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="insurance_company" className="text-sm font-medium">Insurance Company</label>
+                                        <Input
+                                            placeholder="e.g. Geico, State Farm"
+                                            value={formData.insurance_company}
+                                            onChange={handleInputChange('insurance_company')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="insurance_policy_number" className="text-sm font-medium">Policy Number</label>
+                                        <Input
+                                            placeholder="Enter policy number"
+                                            value={formData.insurance_policy_number}
+                                            onChange={handleInputChange('insurance_policy_number')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="insurance_expires_at" className="text-sm font-medium">Insurance Expires</label>
+                                        <DatePicker
+                                            placeholder="Select expiration date"
+                                            value={formData.insurance_expires_at}
+                                            onChange={handleDateChange('insurance_expires_at')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="insurance_monthly_cost" className="text-sm font-medium">Monthly Insurance Cost</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 150.00"
+                                            value={formData.insurance_monthly_cost}
+                                            onChange={handleInputChange('insurance_monthly_cost')}
+                                        />
+                                    </div>
+                                </div>
+                            </TabContent>
+
+                            <TabContent value="financial">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="purchase_date" className="text-sm font-medium">Purchase Date</label>
+                                        <DatePicker
+                                            placeholder="Select purchase date"
+                                            value={formData.purchase_date}
+                                            onChange={handleDateChange('purchase_date')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="purchase_price" className="text-sm font-medium">Purchase Price</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 25000.00"
+                                            value={formData.purchase_price}
+                                            onChange={handleInputChange('purchase_price')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="current_value" className="text-sm font-medium">Current Value</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 22000.00"
+                                            value={formData.current_value}
+                                            onChange={handleInputChange('current_value')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="loan_balance" className="text-sm font-medium">Loan Balance</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 15000.00"
+                                            value={formData.loan_balance}
+                                            onChange={handleInputChange('loan_balance')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="loan_monthly_payment" className="text-sm font-medium">Monthly Loan Payment</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 450.00"
+                                            value={formData.loan_monthly_payment}
+                                            onChange={handleInputChange('loan_monthly_payment')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="current_location" className="text-sm font-medium">Current Location</label>
+                                        <Input
+                                            placeholder="e.g. Los Angeles, CA"
+                                            value={formData.current_location}
+                                            onChange={handleInputChange('current_location')}
+                                        />
+                                    </div>
+                                </div>
+                            </TabContent>
+
+                            <TabContent value="maintenance">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="last_service_date" className="text-sm font-medium">Last Service Date</label>
+                                        <DatePicker
+                                            placeholder="Select last service date"
+                                            value={formData.last_service_date}
+                                            onChange={handleDateChange('last_service_date')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="last_service_mileage" className="text-sm font-medium">Last Service Mileage</label>
+                                        <Input
+                                            type="number"
+                                            placeholder="e.g. 40000"
+                                            value={formData.last_service_mileage}
+                                            onChange={handleInputChange('last_service_mileage')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="next_service_due_date" className="text-sm font-medium">Next Service Due Date</label>
+                                        <DatePicker
+                                            placeholder="Select next service date"
+                                            value={formData.next_service_due_date}
+                                            onChange={handleDateChange('next_service_due_date')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="next_service_due_mileage" className="text-sm font-medium">Next Service Due Mileage</label>
+                                        <Input
+                                            type="number"
+                                            placeholder="e.g. 50000"
+                                            value={formData.next_service_due_mileage}
+                                            onChange={handleInputChange('next_service_due_mileage')}
+                                        />
+                                    </div>
+                                </div>
+                            </TabContent>
+
+                            <TabContent value="rental">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="daily_rental_rate" className="text-sm font-medium">Daily Rental Rate</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 65.00"
+                                            value={formData.daily_rental_rate}
+                                            onChange={handleInputChange('daily_rental_rate')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="weekly_rental_rate" className="text-sm font-medium">Weekly Rental Rate</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 400.00"
+                                            value={formData.weekly_rental_rate}
+                                            onChange={handleInputChange('weekly_rental_rate')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="monthly_rental_rate" className="text-sm font-medium">Monthly Rental Rate</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 1500.00"
+                                            value={formData.monthly_rental_rate}
+                                            onChange={handleInputChange('monthly_rental_rate')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="security_deposit" className="text-sm font-medium">Security Deposit</label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="e.g. 500.00"
+                                            value={formData.security_deposit}
+                                            onChange={handleInputChange('security_deposit')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="turo_listing_id" className="text-sm font-medium">Turo Listing ID</label>
+                                        <Input
+                                            placeholder="Enter Turo listing ID"
+                                            value={formData.turo_listing_id}
+                                            onChange={handleInputChange('turo_listing_id')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="getaround_listing_id" className="text-sm font-medium">Getaround Listing ID</label>
+                                        <Input
+                                            placeholder="Enter Getaround listing ID"
+                                            value={formData.getaround_listing_id}
+                                            onChange={handleInputChange('getaround_listing_id')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="other_platform_ids" className="text-sm font-medium">Other Platform IDs</label>
+                                        <Input
+                                            placeholder="Enter other platform IDs (JSON format)"
+                                            value={formData.other_platform_ids}
+                                            onChange={handleInputChange('other_platform_ids')}
+                                        />
+                                    </div>
+                                    {/* <div className="flex flex-col gap-2">
                             
                                                                     <Input
                                                                         placeholder="Enter vehicle features (JSON format)"
                                                                         value={formData.vehicle_features}
                                                                         onChange={handleInputChange('vehicle_features')}
                                                                     />
-                                                                </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <label htmlFor="notes" className="text-sm font-medium">Notes</label>
-                                                                    <Input
-                                                                        textArea
-                                                                        rows={4}
-                                                                        placeholder="Enter any additional notes..."
-                                                                        value={formData.notes}
-                                                                        onChange={handleInputChange('notes')}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </TabContent>
+                                                                </div> */}
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+                                        <Input
+                                            textArea
+                                            rows={4}
+                                            placeholder="Enter any additional notes..."
+                                            value={formData.notes}
+                                            onChange={handleInputChange('notes')}
+                                        />
+                                    </div><br></br>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="is_available_for_rental" className="text-sm font-medium">Available for Rental</label>
+                                        <Checkbox
+                                            checked={formData.is_available_for_rental}
+                                            onChange={handleCheckboxChange('is_available_for_rental')}
+                                        >
+                                            Available for rental
+                                        </Checkbox>
+                                    </div>
+                                </div>
+                            </TabContent>
                         </div>
                     </Tabs>
                 </Card>

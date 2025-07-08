@@ -6,6 +6,7 @@ import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
 import { apiCreateVehicle } from '@/services/vehiclesServices'
 import { toast } from '@/components/ui/toast'
+// import { label } from 'yet-another-react-lightbox/*'
 
 const { TabNav, TabList, TabContent } = Tabs
 
@@ -21,6 +22,8 @@ const AddVehicle = () => {
         year: '',
         color: '',
         vehicle_type: '',
+        status: '',
+        maintenance: 0,
 
         // Technical Specifications
         engine_type: '',
@@ -49,7 +52,6 @@ const AddVehicle = () => {
         loan_monthly_payment: '',
 
         // Operational Status
-        status: 'active',
         is_available_for_rental: true,
         current_location: '',
 
@@ -101,7 +103,7 @@ const AddVehicle = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
-        
+
         try {
             // Prepare the data for API call
             const vehicleData = {
@@ -131,17 +133,19 @@ const AddVehicle = () => {
                 // Parse JSON fields if they contain data
                 other_platform_ids: formData.other_platform_ids ? JSON.parse(formData.other_platform_ids || '{}') : {},
                 vehicle_features: formData.vehicle_features ? JSON.parse(formData.vehicle_features || '{}') : {},
+                status: formData.status ? formData.status : '',
+                maintenance: formData.maintenance ? formData.maintenance : 0
             }
 
             await apiCreateVehicle(vehicleData)
-            
+
             toast.push('Vehicle created successfully!', {
                 placement: 'top-end',
                 type: 'success'
             })
-            
-        // Navigate back to vehicles list after successful creation
-        navigate('/fleetbold/vehicles')
+
+            // Navigate back to vehicles list after successful creation
+            navigate('/fleetbold/vehicles')
         } catch (error) {
             console.error('Error creating vehicle:', error)
             toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
@@ -182,19 +186,18 @@ const AddVehicle = () => {
         { value: 'cvt', label: 'CVT' }
     ]
 
-    const statusOptions = [
-        { value: 'active', label: 'Active' },
-        { value: 'maintenance', label: 'Maintenance' },
-        { value: 'inactive', label: 'Inactive' },
-        { value: 'sold', label: 'Sold' }
-    ]
-
     const titleStatusOptions = [
         { value: 'clean', label: 'Clean' },
         { value: 'lien', label: 'Lien' },
         { value: 'salvage', label: 'Salvage' },
         { value: 'flood', label: 'Flood' },
         { value: 'rebuilt', label: 'Rebuilt' }
+    ]
+
+    const status = [
+        { value: "active", label: 'active' },
+        { value: "inactive", label: "inactive" },
+        { value: "in-maintenance", label: "in-maintenance" }
     ]
 
     return (
@@ -288,6 +291,15 @@ const AddVehicle = () => {
                                             options={vehicleTypeOptions}
                                             value={vehicleTypeOptions.find(option => option.value === formData.vehicle_type)}
                                             onChange={(option) => setFormData(prev => ({ ...prev, vehicle_type: option?.value || '' }))}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="status" className="text-sm font-medium">status</label>
+                                        <Select
+                                            placeholder="Select vehicle status"
+                                            options={status}
+                                            value={status.find(opt => opt.value === formData.status)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || '' }))}
                                         />
                                     </div>
                                 </div>
@@ -479,24 +491,6 @@ const AddVehicle = () => {
                                             onChange={handleInputChange('current_location')}
                                         />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label htmlFor="status" className="text-sm font-medium">Status</label>
-                                        <Select
-                                            placeholder="Select vehicle status"
-                                            options={statusOptions}
-                                            value={statusOptions.find(option => option.value === formData.status)}
-                                            onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || 'active' }))}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label htmlFor="is_available_for_rental" className="text-sm font-medium">Available for Rental</label>
-                                        <Checkbox
-                                            checked={formData.is_available_for_rental}
-                                            onChange={handleCheckboxChange('is_available_for_rental')}
-                                        >
-                                            Available for rental
-                                        </Checkbox>
-                                    </div>
                                 </div>
                             </TabContent>
 
@@ -605,14 +599,14 @@ const AddVehicle = () => {
                                             onChange={handleInputChange('other_platform_ids')}
                                         />
                                     </div>
-                                    <div className="flex flex-col gap-2">
+                                    {/* <div className="flex flex-col gap-2">
 
                                         <Input
                                             placeholder="Enter vehicle features (JSON format)"
                                             value={formData.vehicle_features}
                                             onChange={handleInputChange('vehicle_features')}
                                         />
-                                    </div>
+                                    </div> */}
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="notes" className="text-sm font-medium">Notes</label>
                                         <Input
@@ -622,6 +616,15 @@ const AddVehicle = () => {
                                             value={formData.notes}
                                             onChange={handleInputChange('notes')}
                                         />
+                                    </div><br></br>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="is_available_for_rental" className="text-sm font-medium">Available for Rental</label>
+                                        <Checkbox
+                                            checked={formData.is_available_for_rental}
+                                            onChange={handleCheckboxChange('is_available_for_rental')}
+                                        >
+                                            Available for rental
+                                        </Checkbox>
                                     </div>
                                 </div>
                             </TabContent>

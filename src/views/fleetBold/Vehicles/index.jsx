@@ -16,6 +16,7 @@ import {
 } from '@/services/vehiclesServices'
 import { toast } from '@/components/ui/toast'
 import { Spinner } from '@/components/ui'
+import { isArray } from 'lodash'
 
 const { THead, Tr, Th, TBody, Td } = Table
 
@@ -25,9 +26,10 @@ const Vehicles = () => {
     const [statistics, setStatistics] = useState({
         total_vehicles: 0,
         active_vehicles: 0,
-        maintenance_vehicles: 0,
+        status_breakdown: 0,
         available_for_rental: 0,
     })
+    const [rentalCount, setrentalCount] = useState(0)
     const [loading, setLoading] = useState(true)
     const [pagination, setPagination] = useState({
         current: 1,
@@ -45,6 +47,25 @@ const Vehicles = () => {
             })
             console.log('Vehicles response:', response) // Debug log
             setVehicles(response.vehicles || [])
+            console.log(
+                'Rental availability:',
+                response.vehicles.map((v) => v.is_available_for_rental),
+            )
+            // const availableCount = response.vehicles.filter(v => v.is_available_for_rental).length;
+            setStatistics({
+                available_for_rental: response.vehicles.filter(
+                    (v) => v.is_available_for_rental,
+                ).length,
+            })
+            setrentalCount(
+                response.vehicles.filter((v) => v.is_available_for_rental)
+                    .length,
+            )
+            console.log(
+                'Rental count:',
+                response.vehicles.filter((v) => v.is_available_for_rental)
+                    .length,
+            )
             setPagination((prev) => ({
                 ...prev,
                 current: page,
@@ -67,6 +88,7 @@ const Vehicles = () => {
         try {
             const response = await apiGetVehiclesStatistics()
             console.log('Statistics response:', response) // Debug log
+            console.log('status whole response:', response) // Debug log
             setStatistics(response)
         } catch (error) {
             console.error('Error fetching statistics:', error)
@@ -106,27 +128,26 @@ const Vehicles = () => {
     }
 
     const handleDeleteVehicle = async (vehicleId) => {
-            try {
-                await apiDeleteVehicle(vehicleId)
-                toast.push('Vehicle deleted successfully!', {
+        try {
+            await apiDeleteVehicle(vehicleId)
+            toast.push('Vehicle deleted successfully!', {
+                placement: 'top-end',
+                type: 'success',
+            })
+            setViewDialog(false)
+            // Refresh the vehicles list
+            fetchVehicles(pagination.current, pagination.pageSize)
+            fetchStatistics()
+        } catch (error) {
+            console.error('Error deleting vehicle:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to delete vehicle',
+                {
                     placement: 'top-end',
-                    type: 'success',
-                })
-                setViewDialog(false);
-                // Refresh the vehicles list
-                fetchVehicles(pagination.current, pagination.pageSize)
-                fetchStatistics()
-            } catch (error) {
-                console.error('Error deleting vehicle:', error)
-                toast.push(
-                    error.response?.data?.message || 'Failed to delete vehicle',
-                    {
-                        placement: 'top-end',
-                        type: 'error',
-                    },
-                )
-            }
-        
+                    type: 'error',
+                },
+            )
+        }
     }
 
     const handlePageChange = (page) => {
@@ -142,10 +163,10 @@ const Vehicles = () => {
         switch (status) {
             case 'active':
                 return 'text-green-600'
-            case 'maintenance':
+            case 'in-maintenance':
                 return 'text-yellow-600'
             case 'inactive':
-                return 'text-gray-600'
+                return 'text-red-600'
             case 'sold':
                 return 'text-red-600'
             default:
@@ -196,7 +217,12 @@ const Vehicles = () => {
                         <div>
                             <h6 className="text-gray-500">In Maintenance</h6>
                             <h3 className="text-2xl font-bold">
-                                {statistics.maintenance_vehicles}
+                                {isArray(statistics.status_breakdown)
+                                    ? statistics.status_breakdown.find(
+                                          (item) =>
+                                              item.status === 'in-maintenance',
+                                      )?.count || 0
+                                    : 0}
                             </h3>
                         </div>
                     </div>
@@ -208,7 +234,7 @@ const Vehicles = () => {
                                 Available for Rental
                             </h6>
                             <h3 className="text-2xl font-bold">
-                                {statistics.available_for_rental}
+                                {rentalCount}
                             </h3>
                         </div>
                     </div>
@@ -330,7 +356,7 @@ const Vehicles = () => {
                                                         Are you sure you want to
                                                         delete this vehicle?
                                                     </h4>
-                                                    <div className='flex items-center justify-center'>
+                                                    <div className="flex items-center justify-center">
                                                         <Button
                                                             onClick={() =>
                                                                 handleDeleteVehicle(

@@ -6,6 +6,7 @@ import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
 import { apiCreateVehicle } from '@/services/vehiclesServices'
 import { toast } from '@/components/ui/toast'
+import { apiCreateCompany } from '@/services/companiesService'
 
 const { TabNav, TabList, TabContent } = Tabs
 
@@ -16,6 +17,9 @@ const AddCompany = () => {
         // Basic Information
         name: '',
         email: '',
+        admin_name: '',
+        admin_email: '',
+        admin_password: '',
         phone: '',
         title: '',
         country: '',
@@ -29,6 +33,7 @@ const AddCompany = () => {
         Currency: '',
         postalCode: '',
         website: '',
+        createdAt: Date.now,
     })
 
     const [activeTab, setActiveTab] = useState('basic')
@@ -46,44 +51,41 @@ const AddCompany = () => {
         
         try {
             // Prepare the data for API call
-            const vehicleData = {
+            const companyData = {
                 ...formData,
-                // Convert date strings to proper date format if needed
-                registration_expires_at: formData.registration_expires_at ? new Date(formData.registration_expires_at).toISOString() : null,
-                insurance_expires_at: formData.insurance_expires_at ? new Date(formData.insurance_expires_at).toISOString() : null,
-                purchase_date: formData.purchase_date ? new Date(formData.purchase_date).toISOString() : null,
-                last_service_date: formData.last_service_date ? new Date(formData.last_service_date).toISOString() : null,
-                next_service_due_date: formData.next_service_due_date ? new Date(formData.next_service_due_date).toISOString() : null,
-                // Convert numeric fields
-                year: formData.year ? parseInt(formData.year) : null,
-                fuel_capacity: formData.fuel_capacity ? parseFloat(formData.fuel_capacity) : null,
-                seating_capacity: formData.seating_capacity ? parseInt(formData.seating_capacity) : null,
-                mileage: formData.mileage ? parseInt(formData.mileage) : null,
-                insurance_monthly_cost: formData.insurance_monthly_cost ? parseFloat(formData.insurance_monthly_cost) : null,
-                purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : null,
-                current_value: formData.current_value ? parseFloat(formData.current_value) : null,
-                loan_balance: formData.loan_balance ? parseFloat(formData.loan_balance) : null,
-                loan_monthly_payment: formData.loan_monthly_payment ? parseFloat(formData.loan_monthly_payment) : null,
-                daily_rental_rate: formData.daily_rental_rate ? parseFloat(formData.daily_rental_rate) : null,
-                weekly_rental_rate: formData.weekly_rental_rate ? parseFloat(formData.weekly_rental_rate) : null,
-                monthly_rental_rate: formData.monthly_rental_rate ? parseFloat(formData.monthly_rental_rate) : null,
-                security_deposit: formData.security_deposit ? parseFloat(formData.security_deposit) : null,
-                last_service_mileage: formData.last_service_mileage ? parseInt(formData.last_service_mileage) : null,
-                next_service_due_mileage: formData.next_service_due_mileage ? parseInt(formData.next_service_due_mileage) : null,
-                // Parse JSON fields if they contain data
-                other_platform_ids: formData.other_platform_ids ? JSON.parse(formData.other_platform_ids || '{}') : {},
-                vehicle_features: formData.vehicle_features ? JSON.parse(formData.vehicle_features || '{}') : {},
+                // Time
+                // createdAt:  formData.createdAt?  formData.createdAt : null,
+
+                // Company inputs
+                name: formData.name ? formData.name.toString() : '',
+                email: formData.email ? formData.email : '',
+                admin_name: formData.admin_name ? formData.admin_name : '',
+                admin_email: formData.admin_email ? formData.admin_email : '',
+                admin_password: formData.admin_password ? formData.admin_password : '',
+                phone: formData.phone ? parseInt(formData.phone) : null,
+                title: formData.title ? formData.title : '',
+                country: formData.country ? formData.country : '',
+                city: formData.city ? formData.city : '',
+                state: formData.state ? formData.state : '',
+                street: formData.street ? formData.street : '',
+                facebook: formData.facebook ? formData.facebook : '',
+                instagram: formData.instagram ? formData.instagram : '',
+                linkedin: formData.linkedin ? formData.linkedin : '',
+                twitter: formData.twitter ? formData.twitter : '',
+                currency: formData.currency ? formData.currency : '',
+                postalCode: formData.postalCode ? parseInt(formData.postalCode) : '',
+                website: formData.website ? formData.website : '',
             }
 
-            await apiCreateVehicle(vehicleData)
+            await apiCreateCompany(companyData)
             
-            toast.push('Vehicle created successfully!', {
+            toast.push('Company created successfully!', {
                 placement: 'top-end',
                 type: 'success'
             })
             
         // Navigate back to vehicles list after successful creation
-        navigate('/fleetbold/vehicles')
+        navigate('/fleetbold/companies')
         } catch (error) {
             console.error('Error creating vehicle:', error)
             toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
@@ -100,14 +102,10 @@ const AddCompany = () => {
     }
 
     const businessTypeOptions = [
-        { value: 'sedan', label: 'Sedan' },
-        { value: 'suv', label: 'SUV' },
-        { value: 'truck', label: 'Truck' },
-        { value: 'van', label: 'Van' },
-        { value: 'coupe', label: 'Coupe' },
-        { value: 'hatchback', label: 'Hatchback' },
-        { value: 'convertible', label: 'Convertible' },
-        { value: 'wagon', label: 'Wagon' }
+        { value: 'transportation', label: 'transportation' },
+        { value: 'logistics', label: 'logistics' },
+        { value: 'Rental', label: 'Rental' },
+        { value: 'Management services', label: 'Management service' }
     ]
     const currencyTypeOptions = [
         { value: 'usd', label: 'USD' },
@@ -126,7 +124,7 @@ const AddCompany = () => {
                     >
                         Back
                     </Button>
-                    <h4 className="text-2xl font-semibold">Add New Vehicle</h4>
+                    <h4 className="text-2xl font-semibold">Add New Company</h4>
                 </div>
             </div>
 
@@ -144,7 +142,7 @@ const AddCompany = () => {
                                         <label htmlFor="license_plate" className="text-sm font-medium">Name</label>
 
                                         <Input
-                                            placeholder="Enter license plate"
+                                            placeholder="Enter company name"
                                             value={formData.name}
                                             onChange={handleInputChange('name')}
                                             required
@@ -152,17 +150,44 @@ const AddCompany = () => {
 
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="vin" className="text-sm font-medium">Email</label>
+                                        <label htmlFor="email" className="text-sm font-medium">Email</label>
                                         <Input
-                                            placeholder="Enter VIN number"
+                                            placeholder="Enter Email address"
                                             value={formData.email}
                                             onChange={handleInputChange('email')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
+                                        <label htmlFor="admin_name" className="text-sm font-medium">Admin Name</label>
+
+                                        <Input
+                                            placeholder="Enter admin name"
+                                            value={formData.admin_name}
+                                            onChange={handleInputChange('admin_name')}
+                                            required
+                                        />
+
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="email" className="text-sm font-medium">Admin Email</label>
+                                        <Input
+                                            placeholder="Enter Email address"
+                                            value={formData.admin_email}
+                                            onChange={handleInputChange('admin_email')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="admin_password" className="text-sm font-medium">Admin Password</label>
+                                        <Input
+                                            placeholder="create password"
+                                            value={formData.admin_password}
+                                            onChange={handleInputChange('admin_password')}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
                                         <label htmlFor="make" className="text-sm font-medium">Phone Number</label>
                                         <Input
-                                            placeholder="e.g. Toyota, Honda, Ford"
+                                            placeholder="Enter phone number"
                                             value={formData.phone}
                                             onChange={handleInputChange('phone')}
                                         />
@@ -180,7 +205,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="title" className="text-sm font-medium">Title</label>
                                         <Input
-                                            placeholder="e.g. Camry, Accord, Focus"
+                                            placeholder="Company title"
                                             value={formData.title}
                                             onChange={handleInputChange('title')}
                                         />
@@ -189,7 +214,7 @@ const AddCompany = () => {
                                         <label htmlFor="country" className="text-sm font-medium">Country</label>
                                         <Input
                                             type="text"
-                                            placeholder="e.g. 2023"
+                                            placeholder="Enter Country name"
                                             value={formData.country}
                                             onChange={handleInputChange('country')}
                                         />
@@ -197,7 +222,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="city" className="text-sm font-medium">City</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="City name"
                                             value={formData.city}
                                             onChange={handleInputChange('city')}
                                         />
@@ -205,7 +230,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="state" className="text-sm font-medium">State</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="State name"
                                             value={formData.state}
                                             onChange={handleInputChange('state')}
                                         />
@@ -213,7 +238,7 @@ const AddCompany = () => {
                                                                         <div className="flex flex-col gap-2">
                                         <label htmlFor="street" className="text-sm font-medium">Street Address</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="Street Address"
                                             value={formData.street}
                                             onChange={handleInputChange('street')}
                                         />
@@ -221,7 +246,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="postalCode" className="text-sm font-medium">Postal Code</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="00000"
                                             type="number"
                                             value={formData.postalCode}
                                             onChange={handleInputChange('postalCode')}
@@ -230,15 +255,15 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="website" className="text-sm font-medium">website</label>
                                         <Input
-                                            placeholder=""
-                                            value={formData.webiste}
+                                            placeholder="abc@demo.com"
+                                            value={formData.website}
                                             onChange={handleInputChange('website')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="facebook" className="text-sm font-medium">Facebook</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="facebook.com/profile"
                                             value={formData.facebook}
                                             onChange={handleInputChange('facebook')}
                                         />
@@ -246,7 +271,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="instagram" className="text-sm font-medium">Instagram</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="instagram.com/profile"
                                             value={formData.instagram}
                                             onChange={handleInputChange('instagram')}
                                         />
@@ -254,7 +279,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="linkedin" className="text-sm font-medium">Linkedin</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="linkedin.com/profile"
                                             value={formData.linkedin}
                                             onChange={handleInputChange('linkedin')}
                                         />
@@ -262,7 +287,7 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="twitter" className="text-sm font-medium">Twitter</label>
                                         <Input
-                                            placeholder=""
+                                            placeholder="twitter.com/profile"
                                             value={formData.twitter}
                                             onChange={handleInputChange('twitter')}
                                         />

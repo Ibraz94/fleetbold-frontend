@@ -23,3 +23,11 @@ export async function apiDeleteuser(params) {
         params
     })
 }
+
+export async function apiSendInvitation(data) {
+    return ApiService.fetchDataWithAxios({
+        url: '/users/invite',
+        method: 'post',
+        data
+    })
+}

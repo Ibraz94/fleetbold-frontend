@@ -21,6 +21,7 @@ import {
     apiDeleteuser,
     apiEditRole,
     apiFetchUsers,
+    apiSendInvitation,
 } from '@/services/UserService'
 import { toast } from '@/components/ui/toast'
 
@@ -52,9 +53,9 @@ import { toast } from '@/components/ui/toast'
 // ]
 
 const roleOptions = [
-    { value: 'Admin', label: 'Admin' },
-    { value: 'Manager', label: 'Manager' },
-    { value: 'Accountant', label: 'Accountant' },
+    { value: 'admin', label: 'admin' },
+    { value: 'manager', label: 'manager' },
+    { value: 'accountant', label: 'accountant' },
 ]
 
 const modules = [
@@ -215,8 +216,13 @@ const Users = () => {
         setEditDialog(false)
     }
 
-    const handleInviteUser = () => {
+    const handleInviteUser = async () => {
         // In a real app, this would send an invitation
+        const inviteUserData = {
+            email: inviteEmail,
+            role: inviteRole
+        }
+        await apiSendInvitation(inviteUserData);
 
         console.log('Invite user:', inviteEmail, 'as', inviteRole)
         setInviteDialog(false)
@@ -352,12 +358,12 @@ const Users = () => {
             <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
                     <button
-                        onClick={() => setActiveTab('users')}
                         className={`py-2 px-1 border-b-2 font-medium text-sm ${
                             activeTab === 'users'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         }`}
+                        onClick={() => setActiveTab('users')}
                     >
                         Users
                     </button>
@@ -414,8 +420,8 @@ const Users = () => {
             {/* Invite User Dialog */}
             <Dialog
                 isOpen={inviteDialog}
-                onClose={() => setInviteDialog(false)}
                 title="Invite New User"
+                onClose={() => setInviteDialog(false)}
             >
                 <div className="space-y-4">
                     <div>
@@ -423,7 +429,7 @@ const Users = () => {
                             Email Address
                         </label>
                         <Input
-                            type="email"
+                            type="email"    
                             placeholder="Enter email address"
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
@@ -436,8 +442,8 @@ const Users = () => {
                         <Select
                             placeholder="Select role"
                             options={roleOptions}
-                            value={inviteRole}
-                            onChange={(value) => setInviteRole(value)}
+                            value={roleOptions.find((opt) => opt.values === inviteRole)}
+                            onChange={(selectedOption) => setInviteRole(selectedOption.value)}
                         />
                     </div>
                     <div className="flex justify-end space-x-2">
@@ -449,8 +455,8 @@ const Users = () => {
                         </Button>
                         <Button
                             variant="solid"
-                            onClick={handleInviteUser}
                             disabled={!inviteEmail || !inviteRole}
+                            onClick={handleInviteUser}
                         >
                             Send Invitation
                         </Button>
@@ -461,8 +467,8 @@ const Users = () => {
             {/* View User Dialog */}
             <Dialog
                 isOpen={viewDialog}
-                onClose={() => setViewDialog(false)}
                 title="User Details"
+                onClose={() => setViewDialog(false)}
             >
                 {usersData && (
                     <div className="space-y-4">
@@ -505,8 +511,8 @@ const Users = () => {
             {/* Edit User Dialog */}
             <Dialog
                 isOpen={editDialog}
-                onClose={() => setEditDialog(false)}
                 title="Edit User Role"
+                onClose={() => setEditDialog(false)}
             >
                 {selectedUser && (
                     <div className="space-y-4">
@@ -557,9 +563,9 @@ const Users = () => {
             {/* Role Matrix Dialog */}
             <Dialog
                 isOpen={roleMatrixDialog}
-                onClose={() => setRoleMatrixDialog(false)}
                 title="Role Permissions Matrix"
                 width={900}
+                onClose={() => setRoleMatrixDialog(false)}
             >
                 <div className="flex flex-col h-full max-h-[80vh]">
                     {/* Header */}
@@ -577,7 +583,7 @@ const Users = () => {
                                 key={role.value}
                                 className="p-4 flex-shrink-0"
                             >
-                                <h5 className="text-lg font-semibold mb-4 flex items-center sticky top-0 bg-white z-10 pb-2">
+                                <h5 className="text-lg font-semibold mb-4 flex items-center sticky top-0  z-10 pb-2">
                                     <span
                                         className={getRoleBadgeColor(
                                             role.value,
@@ -591,15 +597,15 @@ const Users = () => {
                                 <div className="overflow-x-auto">
                                     <table className="w-full border-collapse min-w-[600px]">
                                         <thead>
-                                            <tr className="border-b bg-gray-50">
-                                                <th className="text-left p-3 font-medium text-gray-700 min-w-[150px]">
+                                            <tr className="border-b ">
+                                                <th className="text-left p-3 font-medium text-white-900 min-w-[150px]">
                                                     Module
                                                 </th>
                                                 {permissions.map(
                                                     (permission) => (
                                                         <th
                                                             key={permission}
-                                                            className="text-center p-3 font-medium text-gray-700 min-w-[80px]"
+                                                            className="text-center p-3 font-medium text-white-700 min-w-[80px]"
                                                         >
                                                             <Tooltip
                                                                 title={`${permission} permission allows users to ${permission.toLowerCase()} data in this module`}
@@ -617,9 +623,9 @@ const Users = () => {
                                             {modules.map((module, index) => (
                                                 <tr
                                                     key={module.id}
-                                                    className={`border-b ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'} hover:bg-blue-25 transition-colors`}
+                                                    className={`border-b ${index % 2 === 0 ? 'bg-gray' : 'bg-gray-25'} hover:bg-blue-25 transition-colors`}
                                                 >
-                                                    <td className="p-3 font-medium text-gray-900">
+                                                    <td className="p-3 font-medium text-white-900">
                                                         {module.name}
                                                     </td>
                                                     {permissions.map(
