@@ -2,8 +2,10 @@ import { Card, Pagination, Button } from '@/components/ui'
 import Container from '@/components/shared/Container'
 import Table from '@/components/ui/Table'
 const { THead, Tr, Th, TBody, Td } = Table
-
+import { HiOutlinePlus, HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi'
+import { useNavigate } from 'react-router'
 const Reservations = () => {
+    const navigate = useNavigate();
     // Mock trip data
     const tripData = {
         reservationId: 'RSV-2023-10-001',
@@ -15,7 +17,7 @@ const Reservations = () => {
         provider: 'Elite Car Rentals',
         invoiceStatus: 'Paid'
     }
-
+    const trips = [tripData];
     const earningsData = {
         tripPrice: 450.00,
         reportedTolls: 25.50,
@@ -47,7 +49,7 @@ const Reservations = () => {
             'Approved': { color: 'border text-green-600', text: 'Approved' },
             'Rejected': { color: 'border text-red-600', text: 'Rejected' }
         }
-        
+
         const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', text: status }
         return (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
@@ -56,12 +58,16 @@ const Reservations = () => {
         )
     }
 
+    const handleAddTrip = () => {
+        navigate('/fleetbold/reservations/add')
+    }
+
     return (
         <Container>
             {/* Header */}
             <div className="mb-6 flex justify-between items-end">
 
-                    <h4 className="text-2xl font-semibold">Reservation Details</h4>
+                <h4 className="text-2xl font-semibold">Reservation Details</h4>
 
                 <div className="flex gap-3">
                     <Button variant="outline">
@@ -74,41 +80,6 @@ const Reservations = () => {
                     </Button>
                 </div>
             </div>
-
-            {/* Trip Header Info */}
-            <Card className="mb-6">
-                <div className="p-6">
-                    <h5 className="text-lg font-semibold mb-4">Trip Information</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">Reservation ID</h6>
-                            <p className="text-sm font-semibold">{tripData.reservationId}</p>
-                        </div>
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">Vehicle</h6>
-                            <p className="text-sm font-semibold">{tripData.vehicle}</p>
-                        </div>
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">Provider</h6>
-                            <p className="text-sm font-semibold">{tripData.provider}</p>
-                        </div>
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">Start Date</h6>
-                            <p className="text-sm font-semibold">{tripData.dates.start}</p>
-                        </div>
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">End Date</h6>
-                            <p className="text-sm font-semibold">{tripData.dates.end}</p>
-                        </div>
-                        <div>
-                            <h6 className="text-sm font-medium text-gray-500 mb-1">Invoice Status</h6>
-                            <div className="mt-1">
-                                {getStatusBadge(tripData.invoiceStatus)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </Card>
 
             {/* Earnings Breakdown */}
             <Card className="mb-6">
@@ -138,6 +109,107 @@ const Reservations = () => {
                     </div>
                 </div>
             </Card>
+
+            {/* Trip Header Info */}
+            <Card className="mb-6">
+                <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xl font-semibold">Reservations List</h4>
+                        <Button
+                            variant="solid"
+                            size="sm"
+                            icon={<HiOutlinePlus />}
+                            onClick={handleAddTrip}
+                        >
+                            Add Reservations
+                        </Button>
+                    </div>
+
+                    <Card>
+                        <Table>
+                            <THead>
+                                <Tr>
+                                    <Th>Reservation ID</Th>
+                                    <Th>Vehicle</Th>
+                                    <Th>Start Date</Th>
+                                    <Th>End Date</Th>
+                                    <Th>Provider</Th>
+                                    <Th>Invoice Status</Th>
+                                    <Th>Actions</Th>
+                                </Tr>
+                            </THead>
+                            <TBody>
+                                {trips.length === 0 ? (
+                                    <Tr>
+                                        <Td colSpan="7" className="text-center py-8">
+                                            No trips found.{' '}
+                                            <button
+                                                // onClick={handleAddTrip}
+                                                className="text-blue-600 hover:underline"
+                                            >
+                                                Add your first trip
+                                            </button>
+                                        </Td>
+                                    </Tr>
+                                ) : (
+                                    trips.map((trip) => (
+                                        <Tr key={trip.reservationId}>
+                                            <Td className="font-medium">{trip.reservationId}</Td>
+                                            <Td>{trip.vehicle}</Td>
+                                            <Td>{trip.dates.start}</Td>
+                                            <Td>{trip.dates.end}</Td>
+                                            <Td>{trip.provider}</Td>
+                                            <Td>
+                                                <span
+                                                >
+                                                    {getStatusBadge(trip.invoiceStatus)}
+                                                </span>
+                                            </Td>
+                                            <Td>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="plain"
+                                                        size="xs"
+                                                        icon={<HiOutlineEye />}
+                                                        onClick={() => handleViewTrip(trip.reservationId)}
+                                                    />
+                                                    <Button
+                                                        variant="plain"
+                                                        size="xs"
+                                                        icon={<HiOutlinePencil />}
+                                                        onClick={() => handleEditTrip(trip.reservationId)}
+                                                    />
+                                                    <Button
+                                                        variant="plain"
+                                                        size="xs"
+                                                        icon={<HiOutlineTrash />}
+                                                        onClick={() => handleDeleteTrip(trip.reservationId)}
+                                                        className="text-red-600 hover:text-red-700"
+                                                    />
+                                                </div>
+                                            </Td>
+                                        </Tr>
+                                    ))
+                                )}
+                            </TBody>
+                        </Table>
+                    </Card>
+
+                    {/* Pagination */}
+                    {/* {trips.length > 0 && (
+                        <div className="mt-4 flex justify-end">
+                            <Pagination
+                                total={tripPagination.total}
+                                pageSize={tripPagination.pageSize}
+                                current={tripPagination.current}
+                                onChange={handleTripPageChange}
+                            />
+                        </div>
+                    )} */}
+                </div>
+
+            </Card>
+
 
             {/* Associated Expenses Table */}
             <Card className="mb-6">
@@ -226,4 +298,4 @@ const Reservations = () => {
     )
 }
 
-export default Reservations 
+export default Reservations;

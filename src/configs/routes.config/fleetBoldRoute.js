@@ -67,6 +67,15 @@ const fleetBoldRoute = [
         },
     },
     {
+        key: 'fleetBold.reservations',
+        path: `${FLEETBOLD_PREFIX_PATH}/reservations/add`,
+        component: lazy(() => import('@/views/fleetBold/Reservations/AddReservations')),
+        authority: [ADMIN, USER],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
+    {
         key: 'fleetBold.expenses',
         path: `${FLEETBOLD_PREFIX_PATH}/expenses`,
         component: lazy(() => import('@/views/fleetBold/Expenses')),

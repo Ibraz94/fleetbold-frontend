@@ -180,25 +180,25 @@ const CompanyDirectory = () => {
                         <Input
                             placeholder="Search companies..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
                             prefix={<HiSearch />}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <Select
                         value={statusFilter}
-                        onChange={setStatusFilter}
                         placeholder="Filter by status"
                         className="w-full lg:w-48"
-                    >
+                        onChange={setStatusFilter}
+                        >
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </Select>
                     <Select
                         value={planFilter}
-                        onChange={setPlanFilter}
                         placeholder="Filter by plan"
                         className="w-full lg:w-48"
+                        onChange={setPlanFilter}
                     >
                         <option value="all">All Plans</option>
                         <option value="enterprise">Enterprise</option>
@@ -297,8 +297,8 @@ const CompanyDirectory = () => {
                                                         size="xs" 
                                                         variant="outline" 
                                                         icon={<HiXCircle />}
-                                                        onClick={() => handleDeactivateCompany(company.id)}
                                                         className="text-red-600 hover:text-red-700"
+                                                        onClick={() => handleDeactivateCompany(company.id)}
                                                     >
                                                         Deactivate
                                                     </Button>
@@ -307,8 +307,8 @@ const CompanyDirectory = () => {
                                                         size="xs" 
                                                         variant="outline" 
                                                         icon={<HiCheckCircle />}
-                                                        onClick={() => handleActivateCompany(company.id)}
                                                         className="text-green-600 hover:text-green-700"
+                                                        onClick={() => handleActivateCompany(company.id)}
                                                     >
                                                         Activate
                                                     </Button>
