@@ -575,7 +575,7 @@ const AddReservations = () => {
                         loading={loading}
                         disabled={loading}
                     >
-                        {loading ? 'Creating...' : 'Add Vehicle'}
+                        {loading ? 'Creating...' : 'Add Reservation'}
                     </Button>
                 </div>
             </Form>

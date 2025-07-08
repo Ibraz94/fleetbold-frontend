@@ -320,7 +320,7 @@ const AddCompany = () => {
                         loading={loading}
                         disabled={loading}
                     >
-                        {loading ? 'Creating...' : 'Add Vehicle'}
+                        {loading ? 'Creating...' : 'Add Company'}
                     </Button>
                 </div>
             </Form>
