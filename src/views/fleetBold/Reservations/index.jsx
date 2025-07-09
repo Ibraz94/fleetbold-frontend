@@ -1,11 +1,20 @@
 import { Card, Pagination, Button } from '@/components/ui'
+import { useState, useEffect } from 'react'
 import Container from '@/components/shared/Container'
 import Table from '@/components/ui/Table'
 const { THead, Tr, Th, TBody, Td } = Table
 import { HiOutlinePlus, HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi'
 import { useNavigate } from 'react-router'
+import { apigetReservations } from '@/services/reservationServices'
 const Reservations = () => {
     const navigate = useNavigate();
+    const [reservations, setReservations] = useState([]);
+    const [loading, setLoading] = useState(true)
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    })
     // Mock trip data
     const tripData = {
         reservationId: 'RSV-2023-10-001',
@@ -17,7 +26,45 @@ const Reservations = () => {
         provider: 'Elite Car Rentals',
         invoiceStatus: 'Paid'
     }
+
+    // Fetch vehicles data
+    const fetchReservations = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apigetReservations({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Reservations response:', response) // Debug log
+            setReservations(response.reservations || [])
+            console.log("Reservations:", response.reservations);
+
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching vehicles:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch vehicles',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
     const trips = [tripData];
+
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true)
+            await Promise.all([fetchReservations()])
+            setLoading(false)
+        }
+        loadData()
+    }, [])
     const earningsData = {
         tripPrice: 450.00,
         reportedTolls: 25.50,
@@ -44,22 +91,41 @@ const Reservations = () => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            'Paid': { color: 'border text-green-600', text: 'Paid' },
-            'Pending': { color: 'border text-yellow-600', text: 'Pending' },
-            'Approved': { color: 'border text-green-600', text: 'Approved' },
-            'Rejected': { color: 'border text-red-600', text: 'Rejected' }
-        }
+            'paid': {
+                bg: 'bg-green-100',
+                textColor: 'text-green-700',
+                text: 'Paid'
+            },
+            'pending': {
+                bg: 'bg-yellow-100',
+                textColor: 'text-yellow-700',
+                text: 'Pending'
+            },
+        };
 
-        const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', text: status }
+        const config = statusConfig[status] || {
+            bg: 'bg-gray-100',
+            textColor: 'text-gray-700',
+            text: status
+        };
+
         return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${config.bg} ${config.textColor}`}>
                 {config.text}
             </span>
-        )
-    }
+        );
+    };
+
 
     const handleAddTrip = () => {
         navigate('/fleetbold/reservations/add')
+    }
+    const handleEditTrip = () => {
+        navigate('/fleetbold/reservations/edit')
+    }
+ 
+    const handlePageChange = (page) => {
+        fetchVehicles(page, pagination.pageSize)
     }
 
     return (
@@ -139,51 +205,41 @@ const Reservations = () => {
                                 </Tr>
                             </THead>
                             <TBody>
-                                {trips.length === 0 ? (
+                                {reservations.length === 0 ? (
                                     <Tr>
                                         <Td colSpan="7" className="text-center py-8">
-                                            No trips found.{' '}
-                                            <button
-                                                // onClick={handleAddTrip}
-                                                className="text-blue-600 hover:underline"
-                                            >
-                                                Add your first trip
-                                            </button>
+                                            No reservations found.
                                         </Td>
                                     </Tr>
                                 ) : (
-                                    trips.map((trip) => (
-                                        <Tr key={trip.reservationId}>
-                                            <Td className="font-medium">{trip.reservationId}</Td>
-                                            <Td>{trip.vehicle}</Td>
-                                            <Td>{trip.dates.start}</Td>
-                                            <Td>{trip.dates.end}</Td>
-                                            <Td>{trip.provider}</Td>
-                                            <Td>
-                                                <span
-                                                >
-                                                    {getStatusBadge(trip.invoiceStatus)}
-                                                </span>
-                                            </Td>
+                                    reservations.map((reservation) => (
+                                        <Tr key={reservation.id}>
+                                            <Td className="font-medium">RSV-{reservation.id}</Td>
+                                            <Td>{reservation.vehicle_name}</Td>
+                                            <Td>{new Date(reservation.start_date).toLocaleString()}</Td>
+                                            <Td>{new Date(reservation.end_date).toLocaleString()}</Td>
+                                            <Td>{reservation.provider}</Td>
+                                            <Td>{getStatusBadge(reservation.invoice_status)}</Td>
+
                                             <Td>
                                                 <div className="flex items-center gap-2">
                                                     <Button
                                                         variant="plain"
                                                         size="xs"
                                                         icon={<HiOutlineEye />}
-                                                        onClick={() => handleViewTrip(trip.reservationId)}
+                                                        onClick={() => handleViewTrip(reservation.id)}
                                                     />
                                                     <Button
                                                         variant="plain"
                                                         size="xs"
                                                         icon={<HiOutlinePencil />}
-                                                        onClick={() => handleEditTrip(trip.reservationId)}
+                                                        onClick={() => handleEditTrip(reservation.id)}
                                                     />
                                                     <Button
                                                         variant="plain"
                                                         size="xs"
                                                         icon={<HiOutlineTrash />}
-                                                        onClick={() => handleDeleteTrip(trip.reservationId)}
+                                                        onClick={() => handleDeleteTrip(reservation.id)}
                                                         className="text-red-600 hover:text-red-700"
                                                     />
                                                 </div>
@@ -191,6 +247,7 @@ const Reservations = () => {
                                         </Tr>
                                     ))
                                 )}
+
                             </TBody>
                         </Table>
                     </Card>

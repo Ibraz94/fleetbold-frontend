@@ -6,12 +6,12 @@ import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
 import { apiCreateVehicle, apiGetVehicles } from '@/services/vehiclesServices'
 import { toast } from '@/components/ui/toast'
-import { apiCreateReservation } from '@/services/reservationServices'
+import { apiCreateReservation, apigetReservation, apigetReservations, apiupdateReservation } from '@/services/reservationServices'
 // import { label } from 'yet-another-react-lightbox/*'
 
 const { TabNav, TabList, TabContent } = Tabs
 
-const AddReservations = () => {
+const EditReservations = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [vehicles, setVehicles] = useState([]);
@@ -69,6 +69,56 @@ const AddReservations = () => {
     })
 
     const [activeTab, setActiveTab] = useState('basic')
+
+    const fetchReservationDetails = async () => {
+        try {
+            setInitialLoading(true)
+            const response = await apigetReservation(id)
+
+            // Populate form with existing data
+            setFormData({
+                vehicle_id: response.vehicle_id || '',
+                provider: response.provider || '',
+                reservation_number: response.reservation_number || '',
+                guest_name: response.guest_name || '',
+                guest_email: response.guest_name || '',
+                guest_phone: response.guest_phone || '',
+                start_date: response.start_date || '',
+                end_date: response.end_date || '',
+                pickup_location: response.pickup_location || '',
+                dropoff_location: response.dropoff_location || '',
+                trip_status: response.trip_status || '',
+                invoice_status: response.invoice_status || '',
+                trip_price: response.trip_price || '',
+                reported_tolls: response.reported_tolls || '',
+                discounts: response.discounts || '',
+                fees: response.fees || '',
+                net_earnings: response.net_earnings || '',
+                mileage_start: response.mileage_start || '',
+                mileage_end: response.mileage_end || '',
+                fuel_level_start: response.fuel_level_start || '',
+                fuel_level_end: response.fuel_level_end || '',
+                damage_reported: response.damage_reported || '',
+                damage_description: response.damage_description || '',
+                cleaning_required: response.cleaning_required || '',
+                guest_rating: response.guest_rating || '',
+                host_rating: response.host_rating || '',
+                completed_at: response.completed_at || '',
+                make: response.make || false,
+                license_plate: response.license_plate || '',
+
+            })
+        } catch (error) {
+            console.error('Error fetching vehicle details:', error)
+            toast.push(error.response?.data?.message || 'Failed to fetch vehicle details', {
+                placement: 'top-end',
+                type: 'error'
+            })
+        } finally {
+            setInitialLoading(false)
+        }
+    }
+
 
     const handleInputChange = (field) => (e) => {
         setFormData(prev => ({
@@ -134,18 +184,18 @@ const AddReservations = () => {
                 ...(formData.notes && { notes: formData.notes }),
             }
 
-            await apiCreateReservation(payload)
+            await apiupdateReservation(payload)
 
-            toast.push('Reservation created successfully!', {
+            toast.push('Reservation updated successfully!', {
                 placement: 'top-end',
                 type: 'success',
             })
 
             navigate('/fleetbold/Reservations')
         } catch (error) {
-            console.error('Error creating reservation:', error)
+            console.error('Error updating reservation:', error)
             toast.push(
-                error.response?.data?.message || 'Failed to create reservation. Please try again.',
+                error.response?.data?.message || 'Failed to update reservation. Please try again.',
                 {
                     placement: 'top-end',
                     type: 'error',
@@ -570,7 +620,7 @@ const AddReservations = () => {
                         loading={loading}
                         disabled={loading}
                     >
-                        {loading ? 'Creating...' : 'Add Reservation'}
+                        {loading ? 'Updating...' : 'Update Reservation'}
                     </Button>
                 </div>
             </Form>
@@ -578,4 +628,4 @@ const AddReservations = () => {
     )
 }
 
-export default AddReservations 
+export default EditReservations 
