@@ -16,11 +16,10 @@ export async function apiEditRole(id, data) {
     })
 }
 
-export async function apiDeleteuser(params) {
+export async function apiDeleteuser(id) {
     return ApiService.fetchDataWithAxios({
-        url: '/users',
-        method: 'put',
-        params
+        url: `/users/${id}`,
+        method: 'delete',
     })
 }
 

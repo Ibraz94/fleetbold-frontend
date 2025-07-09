@@ -45,6 +45,9 @@ const UnixDateTime = ({ value }) => {
 }
 
 const HighlightedText = ({ children, className }) => {
+    {
+        console.log("Children:", children);
+    }
     return (
         <span className={classNames('font-bold heading-text', className)}>
             {children}
@@ -314,7 +317,7 @@ const ActivityEvent = ({ data, compact }) => {
         case 'SIGN_IN':
             return (
                 <div className="inline-flex items-center flex-wrap">
-                    <HighlightedText>{data.userName} </HighlightedText>
+                    {/* <HighlightedText>{data.userName} </HighlightedText> */}
                     <span className="mx-1">signed in</span>
                     {data.ipAddress && (
                         <>
@@ -330,11 +333,23 @@ const ActivityEvent = ({ data, compact }) => {
         case 'SIGN_OUT':
             return (
                 <div className="inline-flex items-center flex-wrap">
-                    <HighlightedText>{data.userName} </HighlightedText>
+                    {/* <HighlightedText>{data.userName} </HighlightedText> */}
                     <span className="mx-1">signed out</span>
                     <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
                         <UnixDateTime value={data.dateTime} />
                     </span>
+                </div>
+            )
+        case 'SEND':
+            return (
+                <div className="inline-flex items-center flex-wrap">
+                    {/* <HighlightedText>{data.userName} </HighlightedText> */}
+                    {/* <span className="mx-1">Invitation send</span> */}
+                    <span className="ml-1 rtl:mr-1 md;ml-3 md:rtl:mr-3 font-semibold">
+                         {/* <span className="mx-1">To:</span> */}
+                         <span className='mx-1'>{data.description}</span>
+                    </span>
+                        <UnixDateTime value={data.dateTime} />
                 </div>
             )
         case 'USER_CREATED':

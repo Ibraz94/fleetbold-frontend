@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Spinner } from '@/components/ui'
 import { HiShieldCheck, HiRefresh, HiOfficeBuilding, HiUsers, HiCurrencyDollar, HiExclamationCircle } from 'react-icons/hi'
 import { apiGetCompaniesStatistics, apiGetCompanies } from '@/services/companiesService'
+import { useNavigate } from 'react-router'
 
 const SuperAdminDashboard = () => {
+    const navigate = useNavigate();
     // State for real statistics
     const [statistics, setStatistics] = useState({
         totalCompanies: 0,
@@ -129,6 +131,10 @@ const SuperAdminDashboard = () => {
             case 'error': return 'text-red-600'
             default: return 'text-gray-600'
         }
+    }
+
+    const handleUserManagement = () => {
+        navigate("/super-admin/users/view")
     }
 
     return (
@@ -300,7 +306,7 @@ const SuperAdminDashboard = () => {
                             <HiCurrencyDollar className="text-xl mb-1" />
                             <span className="text-sm">Billing Report</span>
                         </Button>
-                        <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
+                        <Button variant="outline" className="h-16 flex flex-col items-center justify-center" onClick={handleUserManagement}>
                             <HiUsers className="text-xl mb-1" />
                             <span className="text-sm">User Management</span>
                         </Button>

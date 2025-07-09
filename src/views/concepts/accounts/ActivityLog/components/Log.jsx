@@ -3,18 +3,20 @@ import Button from '@/components/ui/Button'
 import { ActivityAvatar, ActivityEvent } from '@/components/view/Activity'
 import isEmpty from 'lodash/isEmpty'
 import dayjs from 'dayjs'
+import { Pagination } from '@/components/ui'
 
-const Log = ({ activities, loadable, isLoading, onLoadMore, filter = [] }) => {
+const Log = ({ activities, loadable, isLoading, onLoadMore, filter = [], pagination, handlePageChange }) => {
+
     return (
         <div>
             {activities.map((log, index) => (
                 <div key={log.id + index} className="mb-8">
                     {log.events.filter((item) => filter.includes(item.type))
                         .length > 0 && (
-                        <div className="mb-4 font-semibold uppercase">
-                            {dayjs.unix(log.date).format('dddd, DD MMMM')}
-                        </div>
-                    )}
+                            <div className="mb-4 font-semibold uppercase">
+                                {dayjs.unix(log.date).format('dddd, DD MMMM')}
+                            </div>
+                        )}
                     <Timeline>
                         {isEmpty(log.events) ? (
                             <Timeline.Item>No Activities</Timeline.Item>
@@ -22,6 +24,7 @@ const Log = ({ activities, loadable, isLoading, onLoadMore, filter = [] }) => {
                             log.events
                                 .filter((item) => filter.includes(item.type))
                                 .map((event, index) => (
+
                                     <Timeline.Item
                                         key={log.id + event.type + index}
                                         media={<ActivityAvatar data={event} />}

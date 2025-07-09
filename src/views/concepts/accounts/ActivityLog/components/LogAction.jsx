@@ -24,6 +24,7 @@ const filterItems = [
     { label: 'Sign out', value: SIGN_OUT },
     { label: 'User created', value: USER_CREATED },
     { label: 'User updated', value: USER_UPDATED },
+    // { label: 'Invitation send', value: SEND}
 ]
 
 const LogAction = ({

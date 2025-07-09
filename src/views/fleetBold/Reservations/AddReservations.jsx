@@ -135,7 +135,7 @@ const AddReservations = () => {
             })
 
             // Navigate back to vehicles list after successful creation
-            navigate('/fleetbold/vehicles')
+            navigate('/fleetbold/Reservations')
         } catch (error) {
             console.error('Error creating vehicle:', error)
             toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
@@ -148,7 +148,7 @@ const AddReservations = () => {
     }
 
     const handleBack = () => {
-        navigate('/fleetbold/vehicles')
+        navigate('/fleetbold/Reservations')
     }
 
     // Fetch vehicles data

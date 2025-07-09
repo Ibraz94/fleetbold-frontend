@@ -9,6 +9,7 @@ export const CREATE_TICKET = 'CREATE-TICKET'
 // Real API activity types
 export const SIGN_IN = 'SIGN_IN'
 export const SIGN_OUT = 'SIGN_OUT'
+export const SEND = "SEND"
 export const USER_CREATED = 'USER_CREATED'
 export const USER_UPDATED = 'USER_UPDATED'
 export const GENERIC_ACTIVITY = 'GENERIC_ACTIVITY'
@@ -20,6 +21,7 @@ export const avatarType = [
     ASSIGN_TICKET,
     SIGN_IN,
     SIGN_OUT,
+    SEND,
     USER_CREATED,
     USER_UPDATED,
     GENERIC_ACTIVITY,
@@ -30,6 +32,7 @@ export const iconType = [
     CREATE_TICKET,
     SIGN_IN,
     SIGN_OUT,
+    SEND,
     USER_CREATED,
     USER_UPDATED,
 ]

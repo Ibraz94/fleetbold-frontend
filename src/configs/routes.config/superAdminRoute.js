@@ -66,6 +66,15 @@ const superAdminRoute = [
             pageContainerType: 'contained',
         },
     },
+    {
+        key: 'fetchUsers',
+        path: `${SUPER_ADMIN_PREFIX_PATH}/users/view`,
+        component: lazy(() => import('@/views/dashboards/SuperAdminDashboard/pages/UserManagement')),
+        authority: [SUPER_ADMIN],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
 ]
 
 export default superAdminRoute 
