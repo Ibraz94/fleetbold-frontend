@@ -121,31 +121,31 @@ const Users = () => {
         total: 0,
     })
 
-    useEffect(() => {
-        const fetchUsers = async (page = 1, pageSize = 10) => {
-            try {
-                const response = await apiFetchUsers({
-                    page,
-                    per_page: pageSize,
-                })
-                console.log('Users response:', response) // Debug log
-                setusersData(response.users)
-                setPagination((prev) => ({
-                    ...prev,
-                    current: page,
-                    total: response.pagination?.total || 0,
-                }))
-            } catch (error) {
-                console.error('Error fetching vehicles:', error)
-                toast.push(
-                    error.response?.data?.message || 'Failed to fetch vehicles',
-                    {
-                        placement: 'top-end',
-                        type: 'error',
-                    },
-                )
-            }
+    const fetchUsers = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apiFetchUsers({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Users response:', response) // Debug log
+            setusersData(response.users)
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching vehicles:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch vehicles',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
         }
+    }
+    useEffect(() => {
         fetchUsers()
     }, [])
 
@@ -174,6 +174,8 @@ const Users = () => {
                 placement: 'top-end',
                 type: 'success',
             })
+            setDeleteDialog(false);
+            fetchUsers(pagination.current, pagination.pageSize)
         } catch (error) {
             console.error("Error deleting user ", error)
             toast.push(
@@ -197,7 +199,7 @@ const Users = () => {
             toast.push('Role updated successfully!', {
                 placement: 'top-end',
                 type: 'success',
-            })
+            });
         } catch (error) {
             console.error("Error updating user's role ", error)
             toast.push(
@@ -284,7 +286,10 @@ const Users = () => {
                             size="sm"
                             variant="twoTone"
                             icon={<HiOutlineTrash />}
-                            onClick={() => setDeleteDialog(true)}
+                            onClick={() => {
+                                setDeleteDialog(true)
+                                setSelectedUser(row)
+                            }}
                         />
                     </Tooltip>
                 </div>
@@ -464,22 +469,24 @@ const Users = () => {
             >
                 {selectedUser && (
                     <div className="space-y-4">
-                        <div className="flex justify-end space-x-2">
+                        <p>Are you sure you want to delete this user?</p>
+                        <div className="flex justify-center space-x-2">
                             <Button
-                                variant="plain"
+                                variant="outline"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
                                 onClick={() => setDeleteDialog(false)}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 variant="solid"
-                                onClick={() =>
-                                    handleRemove(selectedUser)
-                                }
+                                className="bg-red-600 hover:bg-red-500 text-white"
+                                onClick={() => handleRemove(selectedUser)}
                             >
-                                Delete User
+                                Delete
                             </Button>
                         </div>
+
                     </div>
                 )}
             </Dialog>

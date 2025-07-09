@@ -118,33 +118,34 @@ const Users = () => {
         current: 1,
         pageSize: 10,
         total: 0,
-    })
+    });
+    const [deleteDialog, setDeleteDialog] = useState(false);
 
-    useEffect(() => {
-        const fetchUsers = async (page = 1, pageSize = 10) => {
-            try {
-                const response = await apiFetchUsers({
-                    page,
-                    per_page: pageSize,
-                })
-                console.log('Users response:', response) // Debug log
-                setusersData(response.users)
-                setPagination((prev) => ({
-                    ...prev,
-                    current: page,
-                    total: response.pagination?.total || 0,
-                }))
-            } catch (error) {
-                console.error('Error fetching vehicles:', error)
-                toast.push(
-                    error.response?.data?.message || 'Failed to fetch vehicles',
-                    {
-                        placement: 'top-end',
-                        type: 'error',
-                    },
-                )
-            }
+    const fetchUsers = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apiFetchUsers({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Users response:', response) // Debug log
+            setusersData(response.users)
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching vehicles:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch vehicles',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
         }
+    }
+    useEffect(() => {
         fetchUsers()
     }, [])
 
@@ -166,18 +167,20 @@ const Users = () => {
     const handleRemove = async (user) => {
         // In a real app, this would show a confirmation dialog and remove the user
         try {
-            // const { id } = user;
-            await apiDeleteuser(user)
+            const { id } = user;
+            await apiDeleteuser(id)
             console.log("ID:");
-            toast.push('Role updated successfully!', {
+            toast.push('User deleted successfully!', {
                 placement: 'top-end',
                 type: 'success',
             })
+            setDeleteDialog(false);
+            fetchUsers(pagination.current, pagination.pageSize)
         } catch (error) {
             console.error("Error deleting user ", error)
             toast.push(
                 error.response?.data?.message ||
-                    'Failed to delete user. Please try again.',
+                'Failed to delete user. Please try again.',
                 {
                     placement: 'top-end',
                     type: 'error',
@@ -206,7 +209,7 @@ const Users = () => {
             console.error("Error updating user's role ", error)
             toast.push(
                 error.response?.data?.message ||
-                    'Failed to update users role. Please try again.',
+                'Failed to update users role. Please try again.',
                 {
                     placement: 'top-end',
                     type: 'error',
@@ -325,7 +328,10 @@ const Users = () => {
                             size="sm"
                             variant="twoTone"
                             icon={<HiOutlineTrash />}
-                            onClick={() => handleRemove(row)}
+                            onClick={() => {
+                                setDeleteDialog(true)
+                                setSelectedUser(row)
+                            }}
                         />
                     </Tooltip>
                 </div>
@@ -358,11 +364,10 @@ const Users = () => {
             <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
                     <button
-                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === 'users'
+                        className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'users'
                             ? 'border-blue-500 text-blue-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
+                            }`}
                         onClick={() => setActiveTab('users')}
                     >
                         Users
@@ -429,7 +434,7 @@ const Users = () => {
                             Email Address
                         </label>
                         <Input
-                            type="email"    
+                            type="email"
                             placeholder="Enter email address"
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
@@ -560,6 +565,36 @@ const Users = () => {
                 )}
             </Dialog>
 
+            {/* Delete User dialog */}
+            <Dialog
+                isOpen={deleteDialog}
+                title="Remove User"
+                onClose={() => setDeleteDialog(false)}
+            >
+                {selectedUser && (
+                    <div className="space-y-4">
+                        <p>Are you sure you want to delete this user?</p>
+                        <div className="flex justify-center space-x-2">
+                            <Button
+                                variant="outline"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                                onClick={() => setDeleteDialog(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="solid"
+                                className="bg-red-600 hover:bg-red-500 text-white"
+                                onClick={() => handleRemove(selectedUser)}
+                            >
+                                Delete
+                            </Button>
+                        </div>
+
+                    </div>
+                )}
+            </Dialog>
+
             {/* Role Matrix Dialog */}
             <Dialog
                 isOpen={roleMatrixDialog}
@@ -638,13 +673,13 @@ const Users = () => {
                                                                     <Switcher
                                                                         checked={
                                                                             rolePermissions[
-                                                                                role
-                                                                                    .value
+                                                                            role
+                                                                                .value
                                                                             ]?.[
-                                                                                module
-                                                                                    .id
+                                                                            module
+                                                                                .id
                                                                             ]?.[
-                                                                                permission
+                                                                            permission
                                                                             ] ||
                                                                             false
                                                                         }

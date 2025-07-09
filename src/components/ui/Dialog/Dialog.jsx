@@ -58,7 +58,7 @@ const Dialog = (props) => {
         contentStyle.content.height = height
     }
 
-    const defaultDialogContentClass = 'dialog-content'
+    const defaultDialogContentClass = 'bg-white rounded-lg p-6 max-h-[250vh] overflow-y-auto shadow-xl'
 
     const dialogClass = classNames(defaultDialogContentClass, contentClassName)
 
@@ -70,10 +70,14 @@ const Dialog = (props) => {
                 beforeClose: 'dialog-before-close',
             }}
             overlayClassName={{
-                base: classNames('dialog-overlay', overlayClassName),
+                base: classNames(
+                    'dialog-overlay fixed inset-0 flex items-center justify-center bg-black/40 z-50',
+                    overlayClassName
+                ),
                 afterOpen: 'dialog-overlay-after-open',
                 beforeClose: 'dialog-overlay-before-close',
             }}
+
             portalClassName={classNames('dialog-portal', portalClassName)}
             bodyOpenClassName={classNames('dialog-open', bodyOpenClassName)}
             ariaHideApp={false}
