@@ -77,7 +77,7 @@ const fleetBoldRoute = [
     },
     {
         key: 'fleetBold.editreservations',
-        path: `${FLEETBOLD_PREFIX_PATH}/reservations/edit`,
+        path: `${FLEETBOLD_PREFIX_PATH}/reservations/edit/:id`,
         component: lazy(() => import('@/views/fleetBold/Reservations/EditReservations')),
         authority: [ADMIN, USER],
         meta: {

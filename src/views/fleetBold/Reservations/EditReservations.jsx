@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { Card, Button, Input, Select, DatePicker, Checkbox, Tabs } from '@/components/ui'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
@@ -12,9 +12,12 @@ import { apiCreateReservation, apigetReservation, apigetReservations, apiupdateR
 const { TabNav, TabList, TabContent } = Tabs
 
 const EditReservations = () => {
+    const { id } = useParams();
+    console.log("Id from params:", id);
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [vehicles, setVehicles] = useState([]);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [pagination, setPagination] = useState({
         current: 1,
         pageSize: 10,
@@ -70,10 +73,15 @@ const EditReservations = () => {
 
     const [activeTab, setActiveTab] = useState('basic')
 
+
+    useEffect(() => {
+        fetchReservationDetails()
+    }, [id])
+
     const fetchReservationDetails = async () => {
         try {
             setInitialLoading(true)
-            const response = await apigetReservation(id)
+            const response = await apigetReservations(id)
 
             // Populate form with existing data
             setFormData({
@@ -184,14 +192,14 @@ const EditReservations = () => {
                 ...(formData.notes && { notes: formData.notes }),
             }
 
-            await apiupdateReservation(payload)
+            await apiupdateReservation(id, payload)
 
             toast.push('Reservation updated successfully!', {
                 placement: 'top-end',
                 type: 'success',
             })
 
-            navigate('/fleetbold/Reservations')
+            navigate(`/fleetbold/reservations/${id}`)
         } catch (error) {
             console.error('Error updating reservation:', error)
             toast.push(
@@ -314,7 +322,7 @@ const EditReservations = () => {
                     >
                         Back
                     </Button>
-                    <h4 className="text-2xl font-semibold">Add New Reservation</h4>
+                    <h4 className="text-2xl font-semibold">Edit Reservation</h4>
                 </div>
             </div>
 

@@ -12,6 +12,7 @@ const { TabNav, TabList, TabContent } = Tabs
 
 const EditVehicle = () => {
     const { id } = useParams()
+    console.log("Id from vehicles param", id);
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)

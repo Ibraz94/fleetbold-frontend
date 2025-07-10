@@ -1,15 +1,16 @@
-import { Card, Pagination, Button } from '@/components/ui'
+import { Card, Pagination, Button, Dialog, toast } from '@/components/ui'
 import { useState, useEffect } from 'react'
 import Container from '@/components/shared/Container'
 import Table from '@/components/ui/Table'
 const { THead, Tr, Th, TBody, Td } = Table
 import { HiOutlinePlus, HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi'
 import { useNavigate } from 'react-router'
-import { apigetReservations } from '@/services/reservationServices'
+import { apiDeleteReservation, apigetReservations } from '@/services/reservationServices'
 const Reservations = () => {
     const navigate = useNavigate();
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true)
+    const [viewDialog, setViewDialog] = useState(false)
     const [pagination, setPagination] = useState({
         current: 1,
         pageSize: 10,
@@ -120,10 +121,40 @@ const Reservations = () => {
     const handleAddTrip = () => {
         navigate('/fleetbold/reservations/add')
     }
-    const handleEditTrip = () => {
-        navigate('/fleetbold/reservations/edit')
+    const handleEditTrip = (reservationId) => {
+        navigate(`/fleetbold/reservations/edit/${reservationId}`)
     }
- 
+    const handleView = () => {
+        setViewDialog(true)
+    }
+
+    const handleClose = () => {
+        setViewDialog(false)
+    }
+
+
+    const handleDeleteReservation = async (reservationId) => {
+        try {
+            await apiDeleteReservation(reservationId)
+            toast.push('Vehicle deleted successfully!', {
+                placement: 'top-end',
+                type: 'success',
+            })
+            setViewDialog(false)
+            // Refresh the vehicles list
+            fetchReservations(pagination.current, pagination.pageSize)
+        } catch (error) {
+            console.error('Error deleting vehicle:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to delete vehicle',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
     const handlePageChange = (page) => {
         fetchVehicles(page, pagination.pageSize)
     }
@@ -239,11 +270,44 @@ const Reservations = () => {
                                                         variant="plain"
                                                         size="xs"
                                                         icon={<HiOutlineTrash />}
-                                                        onClick={() => handleDeleteTrip(reservation.id)}
+                                                        onClick={() => handleView()}
                                                         className="text-red-600 hover:text-red-700"
                                                     />
                                                 </div>
                                             </Td>
+                                            <Dialog
+                                                isOpen={viewDialog}
+                                                onClose={() => setViewDialog(false)}
+                                                title="Delete Vehicle"
+                                            >
+                                                {
+                                                    <div className="space-y-4 text-nowrap">
+                                                        <h4>
+                                                            Are you sure you want to
+                                                            delete this reservation?
+                                                        </h4>
+                                                        <div className="flex items-center justify-center">
+                                                            <Button
+                                                                onClick={() =>
+                                                                    handleDeleteReservation(
+                                                                        reservation.id,
+                                                                    )
+                                                                }
+                                                                className="text-red-600 hover:text-red-700 mx-4"
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() =>
+                                                                    handleClose()
+                                                                }
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </Dialog>
                                         </Tr>
                                     ))
                                 )}
