@@ -1,6 +1,8 @@
-import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip } from '@/components/ui'
-import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter } from 'react-icons/hi'
-import { useState, useCallback, useMemo } from 'react'
+import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
+import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck } from 'react-icons/hi'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { apiCreateExpenses, apiFetchExpenses } from '@/services/ExpensesService'
+import { Form } from '@/components/ui/Form'
 
 const mockExpenses = [
     {
@@ -72,7 +74,20 @@ const mockBookings = [
     { value: 'BK004', label: 'Booking BK004 - Nissan Altima', date: '2024-01-18', customer: 'Sarah Wilson' },
 ]
 
-const EXPENSE_TYPES = ['Toll', 'Ticket', 'Cleaning Fees', 'Fuel', 'Maintenance']
+const EXPENSE_TYPES = [
+    { value: 'toll', label: 'Toll' },
+    { value: 'ticket', label: 'Ticket' },
+    { value: 'Cleaning Fees', label: 'Cleaning Fees' },
+    { value: 'fuel', label: 'Fuel' },
+    { value: 'maintenance', label: 'Maintenance' },
+]
+const EXPENSE_STATUS = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'invoiced', label: 'Invoiced' },
+    { value: 'paid', label: 'Paid' },
+]
 
 
 // Mock OCR detection results
@@ -102,7 +117,7 @@ const Expenses = () => {
     const [pendingFilters, setPendingFilters] = useState({
         type: '',
         startDate: null,
-        endDate: null,
+        date_occurred: null,
     })
 
     const expenseTypeOptions = [
@@ -112,7 +127,56 @@ const Expenses = () => {
     const [searchResults, setSearchResults] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [noteText, setNoteText] = useState('')
-    const [expenses, setExpenses] = useState(mockExpenses)
+    const [expenses, setExpenses] = useState([])
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    });
+    const [loading, setLoading] = useState(false)
+    const [manualDialog, setManualDialog] = useState(false);
+    const [formData, setFormData] = useState({
+        date_occured: '',
+        description: '',
+        type: '',
+        status: '',
+        receipt_url: '',
+        amount: null,
+        date_occurred: ''
+    });
+
+    const fetchExpenses = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apiFetchExpenses({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Expenses response:', response) // Debug log
+            setExpenses(response.expenses || [])
+            console.log(
+                'Expenses availability:',
+                response.expenses.map((v) => v.description),
+            )
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching expenses:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch expenses',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
+    useEffect(() => {
+        fetchExpenses()
+    }, [])
 
     const handleView = (expense) => {
         setSelectedExpense(expense)
@@ -146,6 +210,22 @@ const Expenses = () => {
         setDetectedExpenses([])
         setProcessingFiles([])
         setImportSummary(null)
+    }
+
+    // Upload process handlers
+    const handleManualDialog = () => {
+        setManualDialog(true)
+        setCurrentStep(0)
+        setDetectedExpenses([])
+        setProcessingFiles([])
+        setImportSummary(null)
+    }
+
+    const handleInputChange = (field) => (e) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: e.target.value
+        }))
     }
 
     const handleFileUpload = useCallback((files) => {
@@ -353,15 +433,15 @@ const Expenses = () => {
             if (pendingFilters.type && expense.type !== pendingFilters.type) return false
 
             // Date filter
-            if (pendingFilters.startDate) {
-                const expenseDate = new Date(expense.date)
-                const startDate = new Date(pendingFilters.startDate)
+            if (pendingFilters.created_at) {
+                const expenseDate = new Date(expense.created_at)
+                const startDate = new Date(pendingFilters.created_at)
                 if (expenseDate < startDate) return false
             }
 
-            if (pendingFilters.endDate) {
-                const expenseDate = new Date(expense.date)
-                const endDate = new Date(pendingFilters.endDate)
+            if (pendingFilters.date_occurred) {
+                const expenseDate = new Date(expense.date_occurred)
+                const endDate = new Date(pendingFilters.date_occurred)
                 if (expenseDate > endDate) return false
             }
 
@@ -373,20 +453,66 @@ const Expenses = () => {
         setPendingFilters(prev => ({ ...prev, [key]: value }))
     }
 
+    const handleDateChange = (field) => (date) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: date
+        }))
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+
+        try {
+            // Prepare the data for API call
+            const expenseData = {
+                ...formData,
+                // Expenses payload
+                date_occured: formData.date_occured ? new Date(formData.date_occured).toISOString() : null,
+                description: formData.description || '',
+                type: formData.type || '',
+                status: formData.status || '',
+                receipt_url: formData.receipt_url || '',
+                amount: formData.amount || null,
+                date_occurred: new Date().toISOString()
+            }
+
+            await apiCreateExpenses(expenseData)
+
+            toast.push('Expense created successfully!', {
+                placement: 'top-end',
+                type: 'success'
+            })
+
+            // Navigate back to vehicles list after successful creation
+            setManualDialog(false)
+        } catch (error) {
+            console.error('Error creating vehicle:', error)
+            toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
+                placement: 'top-end',
+                type: 'error'
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const columns = [
         {
             header: 'Date',
             accessor: 'date',
-            Cell: ({ row }) => new Date(row.date).toLocaleDateString(),
+            Cell: ({ row }) => new Date(row.date_occurred).toLocaleDateString(),
         },
         {
             header: 'Customer',
             accessor: 'customer',
-            Cell: ({ row }) => row.vendor || '-',
+            Cell: ({ row }) => row.description || '-',
         },
         {
             header: 'Booking Type',
             accessor: 'type',
+            Cell: ({ row }) => row.type || '-',
         },
         {
             header: 'Linked Booking',
@@ -402,6 +528,7 @@ const Expenses = () => {
         {
             header: 'File',
             accessor: 'file',
+            Cell: ({ row }) => row.receipt_url || '',
         },
         {
             header: 'Status',
@@ -452,7 +579,7 @@ const Expenses = () => {
         {
             header: 'Date',
             accessor: 'date',
-            Cell: ({ row }) => new Date(row.date).toLocaleDateString(),
+            Cell: ({ row }) => new Date(row.date_occurred).toLocaleDateString(),
         },
         {
             header: 'Type',
@@ -734,6 +861,9 @@ const Expenses = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h4 className="text-2xl font-semibold">Expenses</h4>
+                <Button variant="solid" onClick={handleManualDialog} icon={<HiOutlinePencil />}>
+                    Add Expenses Manually
+                </Button>
                 <Button variant="solid" onClick={handleUploadDialog} icon={<HiOutlineUpload />}>
                     Upload Expenses
                 </Button>
@@ -786,7 +916,7 @@ const Expenses = () => {
 
             {/* Main Expenses Table */}
             <Card>
-                {filteredExpenses.length > 0 ? (
+                {expenses.length > 0 ? (
                     <Table>
                         <Table.THead>
                             <Table.Tr>
@@ -800,8 +930,8 @@ const Expenses = () => {
                             </Table.Tr>
                         </Table.THead>
                         <Table.TBody>
-                            {filteredExpenses.map((expense) => (
-                                <Table.Tr key={expense.id}>
+                            {expenses.map((expense) => (
+                                <Table.Tr key={expense.booking_id}>
                                     {columns.map((column) => (
                                         <Table.Td key={column.accessor}>
                                             {column.Cell ?
@@ -845,6 +975,88 @@ const Expenses = () => {
                         {currentStep === 2 && renderSummaryStep()}
                     </div>
                 </div>
+            </Dialog>
+
+            {/* Manual Expense Dialog */}
+            {/* Upload Process Dialog */}
+            <Dialog
+                isOpen={manualDialog}
+                onClose={() => setManualDialog(false)}
+                title="Manual Expenses"
+                width="800px"
+            // height="400px"
+            >
+
+                <Form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="date_occured" className="text-sm font-medium">Date</label>
+                            <DatePicker
+                                placeholder="Select date"
+                                value={formData.date_occured}
+                                onChange={handleDateChange('date_occured')}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="description" className="text-sm font-medium">Description</label>
+
+                            <Input
+                                placeholder="Enter description"
+                                value={formData.description}
+                                onChange={handleInputChange('description')}
+                            />
+
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="type" className="text-sm font-medium">Booking type</label>
+                            <Select
+                                placeholder="Select booking type"
+                                options={EXPENSE_TYPES}
+                                value={EXPENSE_TYPES.find(option => option.value === formData.type)}
+                                onChange={(option) => setFormData(prev => ({ ...prev, type: option?.value || '' }))}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="status" className="text-sm font-medium">Status</label>
+                            <Select
+                                placeholder="Select Status"
+                                options={EXPENSE_STATUS}
+                                value={EXPENSE_STATUS.find(option => option.value === formData.status)}
+                                onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || '' }))}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="amount" className="text-sm font-medium">Amount</label>
+                            <Input
+                                placeholder="$25.00"
+                                value={formData.amount}
+                                onChange={handleInputChange('amount')}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="receipt_url" className="text-sm font-medium">File</label>
+                            <Input
+                                placeholder="expenses.pdf"
+                                value={formData.receipt_url}
+                                onChange={handleInputChange('receipt_url')}
+                            />
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3 pb-6">
+                        <Button variant="plain" onClick={() => setManualDialog(false)} disabled={loading}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="solid"
+                            type="submit"
+                            icon={<HiOutlineCheck />}
+                            loading={loading}
+                            disabled={loading}
+                        >
+                            {loading ? 'Creating...' : 'Add Expense'}
+                        </Button>
+                    </div>
+                </Form>
             </Dialog>
 
             {/* Search Trip Dialog */}
@@ -1021,7 +1233,7 @@ const Expenses = () => {
                         </div>
                         <div>
                             <h6>Linked Booking</h6>
-                            <p>{selectedExpense.booking || '-'}</p>
+                            <p>{selectedExpense.booking_id || '-'}</p>
                         </div>
                         <div>
                             <h6>File</h6>

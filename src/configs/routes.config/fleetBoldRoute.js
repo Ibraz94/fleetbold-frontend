@@ -94,6 +94,15 @@ const fleetBoldRoute = [
         },
     },
     {
+        key: 'fleetBold.expenses',
+        path: `${FLEETBOLD_PREFIX_PATH}/expenses/add`,
+        component: lazy(() => import('@/views/fleetBold/Expenses/index.jsx')),
+        authority: [ADMIN, USER],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
+    {
         key: 'fleetBold.invoices',
         path: `${FLEETBOLD_PREFIX_PATH}/invoices`,
         component: lazy(() => import('@/views/fleetBold/Invoices')),
