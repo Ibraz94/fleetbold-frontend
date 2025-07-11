@@ -1,7 +1,7 @@
 import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
-import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck } from 'react-icons/hi'
+import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { apiCreateExpenses, apiFetchExpenses } from '@/services/ExpensesService'
+import { apiCreateExpenses, apiDeleteExpense, apiFetchExpenses } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
 
 const mockExpenses = [
@@ -142,7 +142,8 @@ const Expenses = () => {
         status: '',
         receipt_url: '',
         amount: null,
-        date_occurred: ''
+        date_occurred: '',
+        id: null
     });
 
     const fetchExpenses = async (page = 1, pageSize = 10) => {
@@ -155,8 +156,9 @@ const Expenses = () => {
             setExpenses(response.expenses || [])
             console.log(
                 'Expenses availability:',
-                response.expenses.map((v) => v.description),
+                response.expenses.map((v) => v.id),
             )
+            console.log("Expense id: ", response.expenses.id);
             setPagination((prev) => ({
                 ...prev,
                 current: page,
@@ -186,6 +188,28 @@ const Expenses = () => {
     const handleAssign = (expense) => {
         setSelectedExpense(expense)
         setAssignDialog(true)
+    }
+
+    const handleDeleteExpense = async (expense) => {
+        try {
+            await apiDeleteExpense(expense)
+            toast.push('Expense deleted successfully!', {
+                placement: 'top-end',
+                type: 'success',
+            })
+            setViewDialog(false)
+            // Refresh the vehicles list
+            fetchExpenses(pagination.current, pagination.pageSize)
+        } catch (error) {
+            console.error('Error deleting vehicle:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to delete vehicle',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
     }
 
     const handleAssignSubmit = () => {
@@ -485,7 +509,7 @@ const Expenses = () => {
                 type: 'success'
             })
 
-            // Navigate back to vehicles list after successful creation
+            // Navigate back to expenses list after successful creation
             setManualDialog(false)
         } catch (error) {
             console.error('Error creating vehicle:', error)
@@ -535,13 +559,13 @@ const Expenses = () => {
             accessor: 'status',
             Cell: ({ row }) => (
                 <span
-                    className={`${row.status === 'Assigned'
+                    className={`${row.status === 'pending'
                         ? 'text-yellow-500'
                         : row.status === 'Disputed'
                             ? 'text-red-600'
-                            : row.status === 'Unassigned'
+                            : row.status === 'rejected'
                                 ? 'text-amber-600'
-                                : row.status === 'Collected'
+                                : row.status === 'approved'
                                     ? 'text-green-500'
                                     : 'text-gray-600'
                         }`}
@@ -561,14 +585,20 @@ const Expenses = () => {
                         onClick={() => handleView(row)}
                         title="View Details"
                     />
-                    {!row.booking && row.status === 'Unassigned' && (
+                    {!row.booking && row.status && (
                         <Button
                             size="sm"
                             icon={<HiOutlineLink />}
                             onClick={() => handleAssign(row)}
-                            title="Assign Expense"
+                            title="Approve Expense"
                         />
-                    )}
+                    )};
+                    <Button
+                        size="sm"
+                        icon={<HiOutlineTrash />}
+                        onClick={() => handleView(row)}
+                        title="Delete expense"
+                    />
                 </div>
             ),
         },
@@ -1247,6 +1277,34 @@ const Expenses = () => {
                         )}
                     </div>
                 )}
+            </Dialog>
+
+            {/* Delete Dialog */}
+            <Dialog
+                isOpen={viewDialog}
+                onClose={() => setViewDialog(false)}
+                title="Delete expense"
+            >
+                <div>
+                    {
+                        <div className="space-y-4 text-nowrap border p-4 bg-white rounded shadow mt-2">
+                            <h4>Are you sure you want to delete this expense?</h4>
+                            <div className="flex items-center justify-center">
+                                <Button
+                                    onClick={() => {
+                                        handleDeleteExpense(selectedExpense.id);
+                                    }}
+                                    className="text-red-600 hover:text-red-700 mx-4"
+                                >
+                                    Delete
+                                </Button>
+                                <Button onClick={() => setManualDialog(false)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    }
+                </div>
             </Dialog>
         </div>
     )

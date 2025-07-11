@@ -15,3 +15,10 @@ export async function apiCreateExpenses(data) {
         data
     })
 }
+
+export async function apiDeleteExpense(id) {
+    return ApiService.fetchDataWithAxios({
+        url: `/expenses/${id}`,
+        method: 'delete'
+    })
+}
