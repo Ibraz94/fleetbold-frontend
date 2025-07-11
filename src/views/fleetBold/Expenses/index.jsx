@@ -99,6 +99,7 @@ const mockOCRResults = {
 
 const Expenses = () => {
     const [viewDialog, setViewDialog] = useState(false)
+    const [deleteDialog, setDeleteDialog] = useState(false);
     const [assignDialog, setAssignDialog] = useState(false)
     const [selectedExpense, setSelectedExpense] = useState(null)
     const [selectedBooking, setSelectedBooking] = useState('')
@@ -185,6 +186,11 @@ const Expenses = () => {
         setViewDialog(true)
     }
 
+    const handleDeleteView = (expense) => {
+        setSelectedExpense(expense)
+        setDeleteDialog(true)
+    }
+
     const handleAssign = (expense) => {
         setSelectedExpense(expense)
         setAssignDialog(true)
@@ -197,7 +203,7 @@ const Expenses = () => {
                 placement: 'top-end',
                 type: 'success',
             })
-            setViewDialog(false)
+            setDeleteDialog(false)
             // Refresh the vehicles list
             fetchExpenses(pagination.current, pagination.pageSize)
         } catch (error) {
@@ -592,11 +598,11 @@ const Expenses = () => {
                             onClick={() => handleAssign(row)}
                             title="Approve Expense"
                         />
-                    )};
+                    )}
                     <Button
                         size="sm"
                         icon={<HiOutlineTrash />}
-                        onClick={() => handleView(row)}
+                        onClick={() => handleDeleteView(row)}
                         title="Delete expense"
                     />
                 </div>
@@ -891,13 +897,17 @@ const Expenses = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h4 className="text-2xl font-semibold">Expenses</h4>
-                <Button variant="solid" onClick={handleManualDialog} icon={<HiOutlinePencil />}>
-                    Add Expenses Manually
-                </Button>
-                <Button variant="solid" onClick={handleUploadDialog} icon={<HiOutlineUpload />}>
-                    Upload Expenses
-                </Button>
+
+                <div className="flex space-x-2">
+                    <Button variant="solid" onClick={handleManualDialog} icon={<HiOutlinePencil />}>
+                        Add Expenses Manually
+                    </Button>
+                    <Button variant="solid" onClick={handleUploadDialog} icon={<HiOutlineUpload />}>
+                        Upload Expenses
+                    </Button>
+                </div>
             </div>
+
 
             {/* Filters */}
             <Card>
@@ -1281,8 +1291,8 @@ const Expenses = () => {
 
             {/* Delete Dialog */}
             <Dialog
-                isOpen={viewDialog}
-                onClose={() => setViewDialog(false)}
+                isOpen={deleteDialog}
+                onClose={() => setDeleteDialog(false)}
                 title="Delete expense"
             >
                 <div>
@@ -1298,7 +1308,7 @@ const Expenses = () => {
                                 >
                                     Delete
                                 </Button>
-                                <Button onClick={() => setManualDialog(false)}>
+                                <Button onClick={() => setDeleteDialog(false)}>
                                     Cancel
                                 </Button>
                             </div>

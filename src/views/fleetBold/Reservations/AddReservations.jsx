@@ -319,7 +319,7 @@ const AddReservations = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="guest_name" className="text-sm font-medium">Guest name</label>
                                         <Input
-                                            placeholder="e.g. Camry, Accord, Focus"
+                                            placeholder="John Doe"
                                             value={formData.guest_name}
                                             onChange={handleInputChange('guest_name')}
                                         />
@@ -482,7 +482,7 @@ const AddReservations = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="fuel_level_end" className="text-sm font-medium">Fuel level end</label>
                                         <DatePicker
-                                            placeholder="Select expiration date"
+                                            placeholder=""
                                             value={formData.fuel_level_end}
                                             onChange={handleDateChange('fuel_level_end')}
                                         />
@@ -490,9 +490,6 @@ const AddReservations = () => {
                                 </div>
                             </TabContent>
 
-                            {/* guest_rating: '',
-        host_rating: '',
-        notes: '', */}
                             {/* 
                             <TabContent value="reviews">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
