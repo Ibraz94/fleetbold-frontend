@@ -75,11 +75,11 @@ const mockBookings = [
 ]
 
 const EXPENSE_TYPES = [
-    { value: 'toll', label: 'Toll' },
-    { value: 'ticket', label: 'Ticket' },
+    { value: 'Toll', label: 'Toll' },
+    { value: 'Ticket', label: 'Ticket' },
     { value: 'Cleaning Fees', label: 'Cleaning Fees' },
-    { value: 'fuel', label: 'Fuel' },
-    { value: 'maintenance', label: 'Maintenance' },
+    { value: 'Fuel', label: 'Fuel' },
+    { value: 'Maintenance', label: 'Maintenance' },
 ]
 const EXPENSE_STATUS = [
     { value: 'pending', label: 'Pending' },
@@ -118,14 +118,14 @@ const Expenses = () => {
     const [pendingFilters, setPendingFilters] = useState({
         type: '',
         startDate: null,
-        date_occurred: null,
+        endDate: null,
     })
 
     const expenseTypeOptions = [
         { value: '', label: 'All Types' },
-        ...EXPENSE_TYPES.map(type => ({ value: type, label: type }))
+        ...EXPENSE_TYPES
     ]
-    const [searchResults, setSearchResults] = useState([])
+    const [searchResults, setSearchesults] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [noteText, setNoteText] = useState('')
     const [expenses, setExpenses] = useState([])
@@ -540,25 +540,30 @@ const Expenses = () => {
     // Filter all expenses
     const filteredExpenses = useMemo(() => {
         return expenses.filter(expense => {
-            // Type filter
-            if (pendingFilters.type && expense.type !== pendingFilters.type) return false
-
-            // Date filter
-            if (pendingFilters.created_at) {
-                const expenseDate = new Date(expense.created_at)
-                const startDate = new Date(pendingFilters.created_at)
-                if (expenseDate < startDate) return false
+            if (
+                pendingFilters.type &&
+                pendingFilters.type !== '' &&
+                expense.type.toLowerCase() !== pendingFilters.type.toLowerCase()
+            ) {
+                return false;
             }
 
-            if (pendingFilters.date_occurred) {
-                const expenseDate = new Date(expense.date_occurred)
-                const endDate = new Date(pendingFilters.date_occurred)
-                if (expenseDate > endDate) return false
+            const expenseDate = new Date(expense.date_occurred || expense.date);
+
+            if (pendingFilters.startDate) {
+                const startDate = new Date(pendingFilters.startDate);
+                if (expenseDate < startDate) return false;
             }
 
-            return true
-        })
-    }, [expenses, pendingFilters])
+            if (pendingFilters.endDate) {
+                const endDate = new Date(pendingFilters.endDate);
+                if (expenseDate > endDate) return false;
+            }
+
+            return true;
+        });
+    }, [expenses, pendingFilters]);
+
 
     const handleFilterChange = (key, value) => {
         setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -1012,10 +1017,12 @@ const Expenses = () => {
                             <label className="block text-sm font-medium mb-1">Filter by Type</label>
                             <Select
                                 options={expenseTypeOptions}
-                                value={expenseTypeOptions.find(option => option.value === pendingFilters.type)}
+                                value={expenseTypeOptions.find(opt => opt.value === pendingFilters.type)}
                                 onChange={(option) => handleFilterChange('type', option?.value || '')}
                                 placeholder="Select type"
                             />
+
+
                         </div>
                         <div className="flex-1 min-w-[150px]">
                             <label className="block text-sm font-medium mb-1">Start Date</label>
@@ -1065,19 +1072,20 @@ const Expenses = () => {
                             </Table.Tr>
                         </Table.THead>
                         <Table.TBody>
-                            {expenses.map((expense) => (
+                            {filteredExpenses.map((expense) => (
                                 <Table.Tr key={expense.booking_id}>
                                     {columns.map((column) => (
                                         <Table.Td key={column.accessor}>
-                                            {column.Cell ?
-                                                column.Cell({ row: expense }) :
-                                                expense[column.accessor]
+                                            {column.Cell
+                                                ? column.Cell({ row: expense })
+                                                : expense[column.accessor]
                                             }
                                         </Table.Td>
                                     ))}
                                 </Table.Tr>
                             ))}
                         </Table.TBody>
+
                     </Table>
                 ) : (
                     <div className="p-8 text-center text-gray-500">
@@ -1474,7 +1482,7 @@ const Expenses = () => {
             >
                 <div>
                     {
-                        <div className="space-y-4 text-nowrap border p-4 bg-white rounded shadow mt-2">
+                        <div className="space-y-4 text-nowrap p-4 rounded shadow mt-2">
                             <h4>Are you sure you want to delete this expense?</h4>
                             <div className="flex items-center justify-center">
                                 <Button
