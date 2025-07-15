@@ -7,6 +7,12 @@ export async function apiFetchExpenses(params) {
         params
     })
 }
+export async function apiFetchExpense(id) {
+    return ApiService.fetchDataWithAxios({
+        url: `/expenses/${id}`,
+        method: 'get',
+    })
+}
 
 export async function apiCreateExpenses(data) {
     return ApiService.fetchDataWithAxios({
@@ -20,5 +26,12 @@ export async function apiDeleteExpense(id) {
     return ApiService.fetchDataWithAxios({
         url: `/expenses/${id}`,
         method: 'delete'
+    })
+}
+export async function apiUpdateExpense(id, data) {
+    return ApiService.fetchDataWithAxios({
+        url: `/expenses/${id}`,
+        method: 'put',
+        data
     })
 }

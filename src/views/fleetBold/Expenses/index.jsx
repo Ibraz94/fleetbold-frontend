@@ -1,7 +1,7 @@
 import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { apiCreateExpenses, apiDeleteExpense, apiFetchExpenses } from '@/services/ExpensesService'
+import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
 
 const mockExpenses = [
@@ -136,8 +136,8 @@ const Expenses = () => {
     });
     const [loading, setLoading] = useState(false)
     const [manualDialog, setManualDialog] = useState(false);
+    const [editDialog, setEditDialog] = useState(false);
     const [formData, setFormData] = useState({
-        date_occured: '',
         description: '',
         type: '',
         status: '',
@@ -146,6 +146,19 @@ const Expenses = () => {
         date_occurred: '',
         id: null
     });
+    const [editId, SeteditId] = useState();
+
+    const emptyFormData = {
+        date_occured: '',
+        description: '',
+        type: '',
+        status: '',
+        receipt_url: '',
+        amount: null,
+        date_occurred: '',
+        id: null
+    };
+
 
     const fetchExpenses = async (page = 1, pageSize = 10) => {
         try {
@@ -167,6 +180,70 @@ const Expenses = () => {
             }))
         } catch (error) {
             console.error('Error fetching expenses:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch expenses',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
+    const handleEditExpense = async (e, id) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const expenseData = {
+                ...formData,
+                date_occurred: formData.date_occurred ? formData.date_occurred : {},
+                description: formData.description ? formData.description : {},
+                type: formData.type ? formData.type : {},
+                status: formData.status ? formData.status : {},
+                receipt_url: formData.receipt_url ? formData.receipt_url : {},
+                amount: formData.amount ? formData.amount : null,
+            }
+            await apiUpdateExpense(id, expenseData);
+
+            toast.push('Expense updated successfully!', {
+                placement: 'top-end',
+                type: 'success'
+            })
+
+            Navigate('/fleetbold/expenses');
+        } catch (error) {
+            console.error('Error updating expense:', error)
+            toast.push(error.response?.data?.message || 'Failed to update expense. Please try again.', {
+                placement: 'top-end',
+                type: 'error'
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const fetchSingleExpense = async (expense) => {
+        console.log("Single expense id: ", expense.id);
+        try {
+            const response = await apiFetchExpense(expense.id)
+            console.log('single expense response:', response) // Debug log
+            // setSingleExpense(response.expenses || [])
+            setFormData({
+                date_occurred: response.date_occurred || '',
+                description: response.description || '',
+                type: response.type || '',
+                status: response.status || '',
+                receipt_url: response.receipt_url || '',
+                amount: response.amount || '',
+            })
+            console.log(
+                'single expense availability:',
+                response.expenses.map((v) => v.id),
+            )
+            console.log("single expense id: ", response.expenses.id);
+        } catch (error) {
+            console.error('Error fetching single expense:', error)
             toast.push(
                 error.response?.data?.message || 'Failed to fetch expenses',
                 {
@@ -242,13 +319,17 @@ const Expenses = () => {
         setImportSummary(null)
     }
 
-    // Upload process handlers
     const handleManualDialog = () => {
+        setFormData(emptyFormData)
         setManualDialog(true)
         setCurrentStep(0)
         setDetectedExpenses([])
         setProcessingFiles([])
         setImportSummary(null)
+    }
+
+    const handleEditDialog = () => {
+        setEditDialog(true);
     }
 
     const handleInputChange = (field) => (e) => {
@@ -528,6 +609,10 @@ const Expenses = () => {
         }
     }
 
+    useEffect(() => {
+        fetchSingleExpense
+    }, [handleSubmit])
+
     const columns = [
         {
             header: 'Date',
@@ -590,6 +675,16 @@ const Expenses = () => {
                         icon={<HiOutlineEye />}
                         onClick={() => handleView(row)}
                         title="View Details"
+                    />
+                    <Button
+                        size="sm"
+                        icon={<HiOutlinePencil />}
+                        onClick={() => {
+                            handleEditDialog(row)
+                            fetchSingleExpense(row)
+                            SeteditId(row)
+                        }}
+                        title="Edit expense"
                     />
                     {!row.booking && row.status && (
                         <Button
@@ -770,7 +865,7 @@ const Expenses = () => {
                     <h4 className="font-semibold mb-4">Detected Expenses - Please Confirm</h4>
                     <div className="space-y-4">
                         {detectedExpenses.map((expense) => (
-                            <Card key={expense.id} className="p-4">
+                            <Card key={`${expense.id}-${expense.description}`} className="p-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <div className="flex items-center space-x-2 mb-2">
@@ -1094,6 +1189,87 @@ const Expenses = () => {
                             disabled={loading}
                         >
                             {loading ? 'Creating...' : 'Add Expense'}
+                        </Button>
+                    </div>
+                </Form>
+            </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog
+                isOpen={editDialog}
+                onClose={() => setEditDialog(false)}
+                title="Edit Expenses"
+                width="800px"
+            // height="400px"
+            >
+
+                <Form onSubmit={handleEditExpense}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="date_occurred" className="text-sm font-medium">Date</label>
+                            <DatePicker
+                                placeholder="Select date"
+                                value={formData.date_occurred}
+                                onChange={handleDateChange('date_occurred')}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="description" className="text-sm font-medium">Description</label>
+
+                            <Input
+                                placeholder="Enter description"
+                                value={formData.description}
+                                onChange={handleInputChange('description')}
+                            />
+
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="type" className="text-sm font-medium">Booking type</label>
+                            <Select
+                                placeholder="Select booking type"
+                                options={EXPENSE_TYPES}
+                                value={EXPENSE_TYPES.find(option => option.value === formData.type)}
+                                onChange={(option) => setFormData(prev => ({ ...prev, type: option?.value || '' }))}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="status" className="text-sm font-medium">Status</label>
+                            <Select
+                                placeholder="Select Status"
+                                options={EXPENSE_STATUS}
+                                value={EXPENSE_STATUS.find(option => option.value === formData.status)}
+                                onChange={(option) => setFormData(prev => ({ ...prev, status: option?.value || '' }))}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="amount" className="text-sm font-medium">Amount</label>
+                            <Input
+                                placeholder="$25.00"
+                                value={formData.amount}
+                                onChange={handleInputChange('amount')}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="receipt_url" className="text-sm font-medium">File</label>
+                            <Input
+                                placeholder="expenses.pdf"
+                                value={formData.receipt_url}
+                                onChange={handleInputChange('receipt_url')}
+                            />
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3 pb-6">
+                        <Button variant="plain" onClick={() => setEditDialog(false)} disabled={loading}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="solid"
+                            type="submit"
+                            icon={<HiOutlineCheck />}
+                            loading={loading}
+                            disabled={loading}
+                        >
+                            {loading ? 'Updating...' : 'Update Expense'}
                         </Button>
                     </div>
                 </Form>
