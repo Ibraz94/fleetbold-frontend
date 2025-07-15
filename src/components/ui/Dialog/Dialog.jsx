@@ -58,7 +58,7 @@ const Dialog = (props) => {
         contentStyle.content.height = height
     }
 
-    const defaultDialogContentClass = 'bg-white rounded-lg p-6 max-h-[250vh] overflow-y-auto shadow-xl'
+const defaultDialogContentClass = 'bg-white dark:bg-black rounded-lg p-6 max-h-[250vh] overflow-y-auto shadow-xl'
 
     const dialogClass = classNames(defaultDialogContentClass, contentClassName)
 

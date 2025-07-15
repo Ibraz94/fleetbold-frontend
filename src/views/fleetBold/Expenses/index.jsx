@@ -1119,6 +1119,7 @@ const Expenses = () => {
                 onClose={() => setManualDialog(false)}
                 title="Manual Expenses"
                 width="800px"
+
             // height="400px"
             >
 
@@ -1362,7 +1363,7 @@ const Expenses = () => {
                 width="500px"
             >
                 {selectedExpense && (
-                    <div className="space-y-4">
+                    <div className="space-y-4 bg-black">
                         <div>
                             <h6 className="font-medium mb-2">Expense</h6>
                             <p className="text-sm text-gray-600">
