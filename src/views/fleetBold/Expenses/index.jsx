@@ -112,6 +112,8 @@ const Expenses = () => {
     const [processingFiles, setProcessingFiles] = useState([])
     const [importSummary, setImportSummary] = useState(null)
     const [ocrHtml, setOcrHtml] = useState(null);
+    const [editableOcrText, setEditableOcrText] = useState('');
+    const [extractedData, setExtractedData] = useState({});
 
     // New pending expenses assignment state
     const [searchTripDialog, setSearchTripDialog] = useState(false)
@@ -389,6 +391,16 @@ const Expenses = () => {
             const ocrResults = response.data || response;
 
             setOcrHtml(ocrResults.html || null); // Store OCR HTML if present
+            setExtractedData(ocrResults.extracted_data || {}); // Store extracted data if present
+
+            // Extract text from HTML for editable textarea
+            if (ocrResults.html) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = ocrResults.html;
+                setEditableOcrText(tempDiv.innerText || tempDiv.textContent || '');
+            } else {
+                setEditableOcrText('');
+            }
 
             setDetectedExpenses(
                 (ocrResults.data || ocrResults).map((result, index) => ({
@@ -867,13 +879,50 @@ const Expenses = () => {
                 </div>
             )}
 
+            {/* Editable OCR HTML/Textarea */}
             {ocrHtml && (
                 <div className="mt-6">
-                    <h4 className="font-semibold mb-4">Raw OCR Results</h4>
-                    <div
-                        className="border rounded p-4 bg-gray-50"
-                        dangerouslySetInnerHTML={{ __html: ocrHtml }}
+                    <h4 className="font-semibold mb-4">Raw OCR Results (Editable)</h4>
+                    <textarea
+                        className="border rounded p-4 bg-gray-50 w-full min-h-[200px]"
+                        value={editableOcrText}
+                        onChange={e => setEditableOcrText(e.target.value)}
                     />
+                </div>
+            )}
+
+            {/* Structured Data Extraction with Copy-to-Field Buttons */}
+            {extractedData && Object.keys(extractedData).length > 0 && (
+                <div className="mt-6">
+                    <h4 className="font-semibold mb-4">Detected Fields</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(extractedData).map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                                <span className="font-medium capitalize">{key}:</span>
+                                <span className="text-gray-700">{value}</span>
+                                <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => {
+                                        // Map extracted field to formData field
+                                        let fieldMap = {
+                                            amount: 'amount',
+                                            vendor: 'vendor',
+                                            date: 'date_occurred',
+                                            type: 'type',
+                                            description: 'description',
+                                            status: 'status',
+                                            receipt_url: 'receipt_url',
+                                        };
+                                        const formField = fieldMap[key] || key;
+                                        setFormData(prev => ({ ...prev, [formField]: value }));
+                                    }}
+                                >
+                                    Copy to Form
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
