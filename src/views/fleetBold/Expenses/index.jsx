@@ -3,6 +3,7 @@ import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, Hi
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
+import { Navigate, useNavigate } from 'react-router'
 
 const mockExpenses = [
     {
@@ -74,14 +75,14 @@ const mockBookings = [
     { value: 'BK004', label: 'Booking BK004 - Nissan Altima', date: '2024-01-18', customer: 'Sarah Wilson' },
 ]
 
-const EXPENSE_TYPES = [
-    { value: 'Toll', label: 'Toll' },
-    { value: 'Ticket', label: 'Ticket' },
-    { value: 'Cleaning Fees', label: 'Cleaning Fees' },
-    { value: 'Fuel', label: 'Fuel' },
-    { value: 'Maintenance', label: 'Maintenance' },
+export const EXPENSE_TYPES = [
+    { value: 'toll', label: 'Toll' },
+    { value: 'ticket', label: 'Ticket' },
+    { value: 'cleaning Fees', label: 'Cleaning Fees' },
+    { value: 'fuel', label: 'Fuel' },
+    { value: 'maintenance', label: 'Maintenance' },
 ]
-const EXPENSE_STATUS = [
+export const EXPENSE_STATUS = [
     { value: 'pending', label: 'Pending' },
     { value: 'approved', label: 'Approved' },
     { value: 'rejected', label: 'Rejected' },
@@ -98,6 +99,7 @@ const mockOCRResults = {
 }
 
 const Expenses = () => {
+    const navigate = useNavigate();
     const [viewDialog, setViewDialog] = useState(false)
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [assignDialog, setAssignDialog] = useState(false)
@@ -314,12 +316,13 @@ const Expenses = () => {
 
     // Upload process handlers
     const handleUploadDialog = () => {
-        setUploadDialog(true)
-        setCurrentStep(0)
-        setUploadedFiles([])
-        setDetectedExpenses([])
-        setProcessingFiles([])
-        setImportSummary(null)
+        // setUploadDialog(true)
+        // setCurrentStep(0)
+        // setUploadedFiles([])
+        // setDetectedExpenses([])
+        // setProcessingFiles([])
+        // setImportSummary(null)
+        navigate('/fleetBold/expenses/add')
     }
 
     const handleManualDialog = () => {
@@ -1156,8 +1159,6 @@ const Expenses = () => {
                     </div>
                 )}
             </Card>
-
-
 
             {/* Upload Process Dialog */}
             <Dialog
