@@ -1,7 +1,7 @@
 import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense } from '@/services/ExpensesService'
+import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
 
 const mockExpenses = [
@@ -111,6 +111,7 @@ const Expenses = () => {
     const [detectedExpenses, setDetectedExpenses] = useState([])
     const [processingFiles, setProcessingFiles] = useState([])
     const [importSummary, setImportSummary] = useState(null)
+    const [ocrHtml, setOcrHtml] = useState(null);
 
     // New pending expenses assignment state
     const [searchTripDialog, setSearchTripDialog] = useState(false)
@@ -372,47 +373,48 @@ const Expenses = () => {
         }
     }, [])
 
-    const processFiles = (files) => {
-        setProcessingFiles(files.map(file => ({ file, status: 'processing' })))
+    // Replace processFiles with OCR API integration
+    const processFiles = async (files) => {
+        setProcessingFiles(files.map(file => ({ file, status: 'processing' })));
 
-        // Simulate OCR processing
-        files.forEach((file, index) => {
-            setTimeout(() => {
-                const mockResult = mockOCRResults[file.name] || {
-                    type: 'Other',
-                    amount: Math.floor(Math.random() * 100) + 10,
-                    vendor: 'Unknown Vendor',
-                    date: new Date().toISOString().split('T')[0]
-                }
+        // Prepare FormData for API
+        const formData = new FormData();
+        files.forEach(file => formData.append('image', file)); // changed from 'files' to 'image'
 
-                setDetectedExpenses(prev => [...prev, {
+        try {
+            // Call the OCR upload API
+            const response = await apiOcrUpload(formData);
+            // Adjust this based on your backend response structure
+            // Example assumes response is { data: [ ...expenseObjects ] } or just [ ...expenseObjects ]
+            const ocrResults = response.data || response;
+
+            setOcrHtml(ocrResults.html || null); // Store OCR HTML if present
+
+            setDetectedExpenses(
+                (ocrResults.data || ocrResults).map((result, index) => ({
                     id: `TEMP_${Date.now()}_${index}`,
-                    file: file.name,
-                    fileType: file.type || 'application/octet-stream',
-                    detectedType: mockResult.type,
-                    confirmedType: mockResult.type,
-                    amount: mockResult.amount,
-                    vendor: mockResult.vendor,
-                    date: mockResult.date,
-                    confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
+                    file: result.fileName || files[index].name,
+                    fileType: files[index].type || 'application/octet-stream',
+                    detectedType: result.type,
+                    confirmedType: result.type,
+                    amount: result.amount,
+                    vendor: result.vendor,
+                    date: result.date,
+                    confidence: result.confidence || 90,
                     status: 'pending_confirmation'
-                }])
+                }))
+            );
 
-                setProcessingFiles(prev =>
-                    prev.map(item =>
-                        item.file === file
-                            ? { ...item, status: 'completed' }
-                            : item
-                    )
-                )
-            }, (index + 1) * 1000)
-        })
-
-        // Move to confirmation step after all files are processed
-        setTimeout(() => {
-            setCurrentStep(2)
-        }, files.length * 1000 + 500)
-    }
+            setProcessingFiles(files.map(file => ({ file, status: 'completed' })));
+            setCurrentStep(2); // Move to confirmation step
+        } catch (error) {
+            toast.push(
+                error.response?.data?.message || 'Failed to process OCR upload',
+                { placement: 'top-end', type: 'error' }
+            );
+            setProcessingFiles([]);
+        }
+    };
 
     const handleTypeConfirmation = (expenseId, newType) => {
         setDetectedExpenses(prev =>
@@ -862,6 +864,16 @@ const Expenses = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {ocrHtml && (
+                <div className="mt-6">
+                    <h4 className="font-semibold mb-4">Raw OCR Results</h4>
+                    <div
+                        className="border rounded p-4 bg-gray-50"
+                        dangerouslySetInnerHTML={{ __html: ocrHtml }}
+                    />
                 </div>
             )}
 

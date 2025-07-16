@@ -35,3 +35,10 @@ export async function apiUpdateExpense(id, data) {
         data
     })
 }
+export async function apiOcrUpload(data) {
+    return ApiService.fetchDataWithAxios({
+        url: `/expenses/ocr-upload`,
+        method: 'post',
+        data
+    })
+}
