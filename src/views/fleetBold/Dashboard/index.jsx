@@ -9,20 +9,34 @@ import Chart from '@/components/shared/Chart'
 import { Table, Avatar, Tag, Switcher, Select, DatePicker } from '@/components/ui'
 import { NumericFormat } from 'react-number-format'
 import dayjs from 'dayjs'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-
+import {apiExpenseSummary} from '@/services/ExpensesService'
+import 'react-tooltip/dist/react-tooltip.css';
+import { Tooltip } from 'react-tooltip'; 
 
 const { Tr, Td, TBody, THead, Th } = Table
+
+
 
 const SummarySegment = ({
     title,
     value,
-    growShrink,
     icon,
     iconClass,
     className,
+    data
 }) => {
+    // Extract status data from the passed data object
+    const statusCounts = data?.by_status || {};
+
+    // Define status color mapping
+    const statusColors = {
+        approved: 'bg-green-500',
+        pending: 'bg-yellow-500',
+        rejected: 'bg-red-500',
+    };
+
     return (
         <div className={classNames('flex flex-col gap-2 py-4 px-6', className)}>
             <div
@@ -36,18 +50,99 @@ const SummarySegment = ({
             <div className="mt-4">
                 <div className="mb-1 text-gray-500">{title}</div>
                 <h3 className="text-2xl font-bold mb-1">{value}</h3>
-                {growShrink && (
-                    <div className="inline-flex items-center flex-wrap gap-1">
-                        <span className={growShrink > 0 ? 'text-emerald-500' : 'text-rose-500'}>
-                            {growShrink > 0 ? '+' : ''}{growShrink}%
-                        </span>
-                        <span className="text-gray-500">vs last month</span>
+
+                {/* Hover details for by_status */}
+                {data && (
+                    <div className="mt-4 flex gap-4">
+                        {['approved', 'pending', 'rejected'].map(status => {
+                            const count = statusCounts[status]?.count || 0;
+                            return (
+                                <div key={status} className="flex items-center gap-2 group relative">
+                                    <div
+                                        className={classNames(
+                                            'h-4 w-4 rounded-full transition-all',
+                                            statusColors[status]
+                                        )}
+                                    />
+                                    {/* Hover content */}
+                                    <div className="absolute hidden group-hover:block bg-white shadow-lg p-2 rounded-lg text-sm">
+                                        {`${status.charAt(0).toUpperCase() + status.slice(1)}: ${count}`}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
         </div>
-    )
-}
+    );
+};
+
+const SummarySegmentExpenses = ({
+    title,
+    value,
+    icon,
+    iconClass,
+    className,
+    data
+}) => {
+    // Extract status data from the passed data object
+    const statusCounts = data?.by_status || {};
+    console.log(data)
+
+    return (
+        <div className={classNames('flex flex-col gap-2 py-4 px-6', className)}>
+            <div className="flex flex-col items-start gap-2">
+                {/* Icon in its own row */}
+                <div
+                    className={classNames(
+                        'flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 text-gray-900 rounded-full text-2xl',
+                        iconClass,
+                    )}
+                >
+                    {icon}
+                </div>
+
+                {/* Title in its own row */}
+                <div>
+                    <div className="mb-1 text-gray-500">
+                        {/* Title with tooltip */}
+                        <span data-tooltip-id="statusTooltip" className="cursor-pointer">
+                            {title}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Count in its own row */}
+                <div className="text-2xl text-black font-bold mb-1 text-left">{data.total_count}</div> {/* Left aligned */}
+            </div>
+
+            {/* React Tooltip for showing status details */}
+            {data && (
+                <Tooltip 
+                    id="statusTooltip" 
+                    place="top" 
+                    effect="solid" 
+                    className="shadow-sm p-1 rounded-lg text-xs bg-white dark:bg-gray-800 "
+                >
+                    <div className="flex flex-col gap-1">
+                        {['approved', 'pending', 'rejected'].map((status) => {
+                            const count = statusCounts[status]?.count || 0;
+                            return (
+                                <div key={status} className="flex gap-1">
+                                    <span className="font-bold">
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}: {count}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </Tooltip>
+            )}
+        </div>
+    );
+};
+
 
 const FleetPerformance = () => {
     const [selectedMonths, setSelectedMonths] = useState([])
@@ -397,6 +492,24 @@ const Alerts = () => {
 const Dashboard = () => {
     const { t } = useTranslation()
 
+    const [totalExpensesData, setExpensesData] = useState()
+
+
+   const fetchExpenseSummary = async () => {
+        try {
+            const response = await apiExpenseSummary();
+            setExpensesData(response.summary);  // Update state with the fetched data
+        } catch (error) {
+            console.error("Error fetching expense summary:", error);
+        }
+    };
+
+       useEffect(() => {
+        fetchExpenseSummary();
+        }, []); 
+
+
+
     return (
         <Container>
             <div className="mb-4">
@@ -407,19 +520,21 @@ const Dashboard = () => {
                     <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
                         <SummarySegment
                             title="Total Invoices"
-                            value="24"
-                            growShrink={12}
+                            value={totalExpensesData ? totalExpensesData.total_count : 0} // Show total count
+                            growShrink={12} // Add your growth or shrink percentage logic if necessary
                             icon={<TbCar />}
                             iconClass="bg-blue-200"
                             className="border-b border-r-0 md:border-b-0 md:ltr:border-r md:rtl:border-l border-gray-200 dark:border-gray-700"
+                            data={totalExpensesData}  // Pass the full data to SummarySegment
                         />
-                        <SummarySegment
+                        <SummarySegmentExpenses
                             title="Total Expense Detected"
                             value="12"
                             growShrink={8}
                             icon={<TbCalendarCheck />}
                             iconClass="bg-emerald-200"
                             className="border-b md:border-b-0 xl:ltr:border-r xl:rtl:border-l border-gray-200 dark:border-gray-700"
+                             data={totalExpensesData}
                         />
                         <SummarySegment
                             title="Invoices Approaching Expiration"

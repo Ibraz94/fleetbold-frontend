@@ -1,5 +1,5 @@
 // pages/expenses/upload.jsx
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui';
 import { apiCreateExpenses, apiOcrUpload } from '@/services/ExpensesService';
 import { EXPENSE_TYPES, EXPENSE_STATUS } from './index';
@@ -12,6 +12,7 @@ export default function UploadExpenses() {
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [ocrHtml, setOcrHtml] = useState('');
     const [editableOcrText, setEditableOcrText] = useState('');
+    const [detectedAmounts, setDetectedAmounts] = useState([]);
     const [formData, setFormData] = useState({
         date_occured: '',
         description: '',
@@ -38,6 +39,14 @@ export default function UploadExpenses() {
             .replace(/(\b\d{5,}\b)/g, '<mark style="background:#FDE68A;">$1</mark>');
     };
 
+    const extractAmountsFromHtml = (html) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const textContent = doc.body.textContent;
+        const matches = [...textContent.matchAll(/\$\d{1,3}(,\d{3})*(\.\d{2})?/g)].map(m => m[0]);
+        return [...new Set(matches)];
+    };
+
     const handleFileUpload = useCallback(async (files) => {
         const validFiles = [];
 
@@ -57,6 +66,10 @@ export default function UploadExpenses() {
         }
 
         setUploadedFiles(validFiles);
+        setFormData((prev) => ({
+            ...prev,
+            receipt_url: validFiles.map(file => file.name).join(', '),
+        }));
         setProcessing(true);
 
         const formData = new FormData();
@@ -74,9 +87,12 @@ export default function UploadExpenses() {
 
                 setEditableOcrText(plainText);
                 setOcrHtml(formatted);
+                const detected = extractAmountsFromHtml(ocrResults.html);
+                setDetectedAmounts(detected);
             } else {
                 setEditableOcrText('');
                 setOcrHtml('');
+                setDetectedAmounts([]);
             }
         } catch (error) {
             toast.push(<div>{error.response?.data?.message}</div> || <div>Failed to process OCR upload</div>, {
@@ -108,7 +124,6 @@ export default function UploadExpenses() {
                 duration: 3000,
             });
 
-            // Clear form fields after successful submission
             setFormData({
                 date_occured: '',
                 description: '',
@@ -121,10 +136,11 @@ export default function UploadExpenses() {
             setUploadedFiles([]);
             setEditableOcrText('');
             setOcrHtml('');
+            setDetectedAmounts([]);
             navigate('/fleetBold/expenses')
 
         } catch (error) {
-            toast.push(<div>error.response?.data?.message </div> || <div>❌ Failed to create expense.</div>, {
+            toast.push(<div>{error.response?.data?.message}</div> || <div>❌ Failed to create expense.</div>, {
                 placement: 'top-end',
                 type: 'error',
             });
@@ -211,10 +227,11 @@ export default function UploadExpenses() {
                         </div>
                         <div className="flex flex-col gap-2">
                             <label htmlFor="amount" className="text-sm font-medium">Amount</label>
-                            <Input
+                            <Select
                                 placeholder="$25.00"
-                                value={formData.amount}
-                                onChange={handleInputChange('amount')}
+                                options={detectedAmounts.map(val => ({ label: val, value: val }))}
+                                value={{ label: formData.amount, value: formData.amount }}
+                                onChange={(option) => setFormData(prev => ({ ...prev, amount: option?.value || '' }))}
                             />
                         </div>
                         <div className="flex flex-col gap-2">

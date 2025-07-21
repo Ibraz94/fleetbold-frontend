@@ -1,9 +1,12 @@
 import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload } from '@/services/ExpensesService'
+import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload, apiApproveExpense } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
 import { Navigate, useNavigate } from 'react-router'
+import {apiFetchUpload} from  '@/services/UploadsService'
+import {apigetReservations} from  '@/services/reservationServices'
+import appConfig from '@/configs/app.config'
 
 const mockExpenses = [
     {
@@ -90,8 +93,6 @@ export const EXPENSE_STATUS = [
     { value: 'paid', label: 'Paid' },
 ]
 
-
-// Mock OCR detection results
 const mockOCRResults = {
     'receipt1.jpg': { type: 'Toll', amount: 12.50, vendor: 'Highway Tolls', date: '2024-01-15' },
     'invoice.pdf': { type: 'Cleaning', amount: 85.00, vendor: 'CleanCar Services', date: '2024-01-16' },
@@ -139,6 +140,14 @@ const Expenses = () => {
         pageSize: 10,
         total: 0,
     });
+        const [reservationPgination, setreservationPgination] = useState({
+        current_page: 1,
+        total_pages: 1,
+        has_next: false,
+    });
+    const [reservationsLoading, setreservationsLoading] = useState(false);
+    const [reservations,setReservations] = useState([]);
+
     const [loading, setLoading] = useState(false)
     const [manualDialog, setManualDialog] = useState(false);
     const [editDialog, setEditDialog] = useState(false);
@@ -259,9 +268,32 @@ const Expenses = () => {
         }
     }
 
+    const fetchBookings = async (expenseId, page = 1) => {
+        setreservationsLoading(true);
+        try {
+            const response = await apigetReservations({ page });
+            const { reservations, pagination } = response;
+
+            setReservations((prevBookings) => [...prevBookings, ...reservations]);
+            setreservationPgination(pagination);
+        } catch (err) {
+            console.error("Error fetching bookings:", err);
+        } finally {
+            setreservationsLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchExpenses()
+        fetchBookings()
     }, [])
+
+    const handleScroll = (e) => {
+        const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
+        if (bottom && reservationPgination.has_next && !rervationLoading) {
+            apigetReservations(reservationPgination.current_page + 1);
+        }
+    };
 
     const handleView = (expense) => {
         setSelectedExpense(expense)
@@ -273,7 +305,7 @@ const Expenses = () => {
         setDeleteDialog(true)
     }
 
-    const handleAssign = (expense) => {
+    const handleAssign = async (expense) => {
         setSelectedExpense(expense)
         setAssignDialog(true)
     }
@@ -663,10 +695,34 @@ const Expenses = () => {
         },
 
         {
-            header: 'File',
-            accessor: 'file',
-            Cell: ({ row }) => row.receipt_url || '',
-        },
+    header: 'File',
+    accessor: 'file',
+    Cell: ({ row }) => {
+        const handleClick = async () => {
+            try {
+                const response = await apiFetchUpload(row.id);
+                console.log('Upload fetched:', response);
+                const fileUrl = appConfig.apiPrefix+response?.file_url;
+                if (fileUrl) {
+                    window.open(fileUrl, '_blank');
+                } else {
+                    console.warn('File URL not found in response');
+                }
+            } catch (error) {
+                console.error('Failed to fetch upload:', error);
+            }
+        };
+
+        return (
+            <span
+                onClick={handleClick}
+                style={{ cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
+            >
+                {row.receipt_url || ''}
+            </span>
+        );
+    },
+},
         {
             header: 'Status',
             accessor: 'status',
@@ -1464,39 +1520,37 @@ const Expenses = () => {
                 )}
             </Dialog>
 
-            {/* Existing Assign Dialog */}
-            <Dialog
-                isOpen={assignDialog}
-                onClose={() => setAssignDialog(false)}
-                title="Assign to Booking"
-            >
-                {selectedExpense && (
-                    <div className="space-y-4">
-                        <div>
-                            <h6>Expense Details</h6>
-                            <p>
-                                {selectedExpense.type} - ${selectedExpense.amount}
-                            </p>
-                        </div>
-                        <div>
-                            <h6>Select Booking</h6>
-                            <Select
-                                options={mockBookings}
-                                value={selectedBooking}
-                                onChange={(value) => setSelectedBooking(value)}
-                            />
-                        </div>
-                        <div className="flex justify-end">
-                            <Button
-                                variant="solid"
-                                onClick={handleAssignSubmit}
-                            >
-                                Assign
-                            </Button>
-                        </div>
+            {/* Existing Assign Dialog */} {/* this here */}
+            <Dialog isOpen={assignDialog} onClose={() => setAssignDialog(false)} title="Assign to Booking">
+            {selectedExpense && (
+                <div className="space-y-4">
+                    <div>
+                        <h6>Expense Details</h6>
+                        <p>
+                            {selectedExpense.type} - ${selectedExpense.amount}
+                        </p>
                     </div>
-                )}
-            </Dialog>
+                    <div>
+                        <h6>Select Booking</h6>
+                        <Select
+                            options={reservations.map((booking) => ({
+                                value: booking.id,
+                                label: booking.vehicle_name, 
+                            }))}
+                            value={selectedBooking}
+                            onChange={(value) => setSelectedBooking(value)}
+                            onScroll={handleScroll} // Add scroll listener for pagination
+                            isLoading={reservationsLoading} // Show loading spinner if fetching more bookings
+                        />
+                    </div>
+                    <div className="flex justify-end">
+                        <Button variant="solid" onClick={handleAssignSubmit}>
+                            Assign
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </Dialog>
 
             {/* Existing View Dialog */}
             <Dialog
