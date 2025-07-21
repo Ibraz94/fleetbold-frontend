@@ -76,6 +76,15 @@ const superAdminRoute = [
         },
     },
     {
+        key: 'viewCompany',
+       path: `${SUPER_ADMIN_PREFIX_PATH}/company/view/:companyId`,
+        component: lazy(() => import('@/views/dashboards/SuperAdminDashboard/pages/ViewCompany')),
+        authority: [SUPER_ADMIN],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
+    {
         key: 'fetchUsers',
         path: `${SUPER_ADMIN_PREFIX_PATH}/users/view`,
         component: lazy(() => import('@/views/dashboards/SuperAdminDashboard/pages/UserManagement')),

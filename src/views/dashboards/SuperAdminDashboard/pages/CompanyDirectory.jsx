@@ -108,6 +108,10 @@ const CompanyDirectory = () => {
      navigate(`${SUPER_ADMIN_PREFIX_PATH}/company/manage/${companyId}`)
   }
 
+    const handleViewCompany = async (companyId) =>{
+     navigate(`${SUPER_ADMIN_PREFIX_PATH}/company/view/${companyId}`)
+  }
+
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           company.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -284,7 +288,7 @@ const CompanyDirectory = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
-                        <Button size="xs" variant="outline" icon={<HiEye />}>
+                        <Button onClick={()=>{handleViewCompany(company.id)}} size="xs" variant="outline" icon={<HiEye />}>
                           View
                         </Button>
                         <Button onClick={()=>{handleManageCompany(company.id)}} size="xs" variant="outline" icon={<HiCog />}>
