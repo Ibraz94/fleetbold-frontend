@@ -114,7 +114,7 @@ const SummarySegmentExpenses = ({
                 </div>
 
                 {/* Count in its own row */}
-                <div className="text-2xl text-black font-bold mb-1 text-left">{data.total_count}</div> {/* Left aligned */}
+                <div className="text-2xl text-black font-bold mb-1 text-left">{data?.total_count || 'N/A'}</div> {/* Left aligned */}
             </div>
 
             {/* React Tooltip for showing status details */}

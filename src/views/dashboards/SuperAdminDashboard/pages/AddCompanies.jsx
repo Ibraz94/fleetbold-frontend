@@ -4,9 +4,8 @@ import { Card, Button, Input, Select, Tabs } from '@/components/ui'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import { HiOutlineArrowLeft, HiOutlineCheck } from 'react-icons/hi'
-import { apiCreateVehicle } from '@/services/vehiclesServices'
-import { toast } from '@/components/ui/toast'
 import { apiCreateCompany } from '@/services/companiesService'
+import { toast } from '@/components/ui/toast'
 
 const { TabNav, TabList, TabContent } = Tabs
 
@@ -19,19 +18,19 @@ const AddCompany = () => {
         email: '',
         admin_name: '',
         admin_email: '',
-        admin_password: '',
+        admin_password: '', //required
         phone: '',
         title: '',
         country: '',
         city: '',
         state: '',
-        street: '',
-        facebook: '',
-        instagram: '',
-        linkedin: '',
-        twitter: '',
-        Currency: '',
-        postalCode: '',
+        street_address: '',
+        facebook_url: '',
+        instagram_url: '',
+        linkedin_url: '',
+        twitter_url: '',
+        currency: '',
+        postal_code: '',
         website: '',
         createdAt: Date.now,
     })
@@ -48,15 +47,11 @@ const AddCompany = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
-        
+
         try {
             // Prepare the data for API call
             const companyData = {
                 ...formData,
-                // Time
-                // createdAt:  formData.createdAt?  formData.createdAt : null,
-
-                // Company inputs
                 name: formData.name ? formData.name.toString() : '',
                 email: formData.email ? formData.email : '',
                 admin_name: formData.admin_name ? formData.admin_name : '',
@@ -67,28 +62,28 @@ const AddCompany = () => {
                 country: formData.country ? formData.country : '',
                 city: formData.city ? formData.city : '',
                 state: formData.state ? formData.state : '',
-                street: formData.street ? formData.street : '',
-                facebook: formData.facebook ? formData.facebook : '',
-                instagram: formData.instagram ? formData.instagram : '',
-                linkedin: formData.linkedin ? formData.linkedin : '',
-                twitter: formData.twitter ? formData.twitter : '',
+                street_address: formData.street_address ? formData.street_address : '',
+                facebook_url: formData.facebook_url ? formData.facebook_url : '',
+                instagram_url: formData.instagram_url ? formData.instagram_url : '',
+                linkedin_url: formData.linkedin_url ? formData.linkedin_url : '',
+                twitter_url: formData.twitter_url ? formData.twitter_url : '',
                 currency: formData.currency ? formData.currency : '',
-                postalCode: formData.postalCode ? parseInt(formData.postalCode) : '',
+                postal_code: formData.postal_code ? parseInt(formData.postal_code) : '',
                 website: formData.website ? formData.website : '',
             }
 
             await apiCreateCompany(companyData)
-            
+
             toast.push('Company created successfully!', {
                 placement: 'top-end',
                 type: 'success'
             })
-            
-        // Navigate back to vehicles list after successful creation
-        navigate('/fleetbold/companies')
+
+            // Navigate back to companies list after successful creation
+            navigate('/fleetbold/companies')
         } catch (error) {
-            console.error('Error creating vehicle:', error)
-            toast.push(error.response?.data?.message || 'Failed to create vehicle. Please try again.', {
+            console.error('Error creating company:', error)
+            toast.push(error.response?.data?.message || 'Failed to create company. Please try again.', {
                 placement: 'top-end',
                 type: 'error'
             })
@@ -102,14 +97,14 @@ const AddCompany = () => {
     }
 
     const businessTypeOptions = [
-        { value: 'transportation', label: 'transportation' },
-        { value: 'logistics', label: 'logistics' },
+        { value: 'Transportation', label: 'Transportation' },
+        { value: 'Logistics', label: 'Logistics' },
         { value: 'Rental', label: 'Rental' },
-        { value: 'Management services', label: 'Management service' }
+        { value: 'Management services', label: 'Management services' }
     ]
     const currencyTypeOptions = [
-        { value: 'usd', label: 'USD' },
-        { value: 'pkr', label: 'PKR' },
+        { value: 'USD', label: 'USD' },
+        { value: 'PKR', label: 'PKR' },
     ]
 
     return (
@@ -139,15 +134,13 @@ const AddCompany = () => {
                             <TabContent value="basic">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="license_plate" className="text-sm font-medium">Name</label>
-
+                                        <label htmlFor="name" className="text-sm font-medium">Name</label>
                                         <Input
                                             placeholder="Enter company name"
                                             value={formData.name}
                                             onChange={handleInputChange('name')}
                                             required
                                         />
-
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="email" className="text-sm font-medium">Email</label>
@@ -159,19 +152,17 @@ const AddCompany = () => {
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="admin_name" className="text-sm font-medium">Admin Name</label>
-
                                         <Input
                                             placeholder="Enter admin name"
                                             value={formData.admin_name}
                                             onChange={handleInputChange('admin_name')}
                                             required
                                         />
-
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="email" className="text-sm font-medium">Admin Email</label>
+                                        <label htmlFor="admin_email" className="text-sm font-medium">Admin Email</label>
                                         <Input
-                                            placeholder="Enter Email address"
+                                            placeholder="Enter admin email"
                                             value={formData.admin_email}
                                             onChange={handleInputChange('admin_email')}
                                         />
@@ -179,13 +170,13 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="admin_password" className="text-sm font-medium">Admin Password</label>
                                         <Input
-                                            placeholder="create password"
+                                            placeholder="Create password"
                                             value={formData.admin_password}
                                             onChange={handleInputChange('admin_password')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="make" className="text-sm font-medium">Phone Number</label>
+                                        <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
                                         <Input
                                             placeholder="Enter phone number"
                                             value={formData.phone}
@@ -193,7 +184,7 @@ const AddCompany = () => {
                                         />
                                     </div>
 
-                                   <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2">
                                         <label htmlFor="business_type" className="text-sm font-medium">Business Type</label>
                                         <Select
                                             placeholder="Select Business type"
@@ -213,7 +204,6 @@ const AddCompany = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="country" className="text-sm font-medium">Country</label>
                                         <Input
-                                            type="text"
                                             placeholder="Enter Country name"
                                             value={formData.country}
                                             onChange={handleInputChange('country')}
@@ -235,25 +225,25 @@ const AddCompany = () => {
                                             onChange={handleInputChange('state')}
                                         />
                                     </div>
-                                                                        <div className="flex flex-col gap-2">
-                                        <label htmlFor="street" className="text-sm font-medium">Street Address</label>
+                                    <div className="flex flex-col gap-2">
+                                        <label htmlFor="street_address" className="text-sm font-medium">Street Address</label>
                                         <Input
                                             placeholder="Street Address"
-                                            value={formData.street}
-                                            onChange={handleInputChange('street')}
+                                            value={formData.street_address}
+                                            onChange={handleInputChange('street_address')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="postalCode" className="text-sm font-medium">Postal Code</label>
+                                        <label htmlFor="postal_code" className="text-sm font-medium">Postal Code</label>
                                         <Input
                                             placeholder="00000"
                                             type="number"
-                                            value={formData.postalCode}
-                                            onChange={handleInputChange('postalCode')}
+                                            value={formData.postal_code}
+                                            onChange={handleInputChange('postal_code')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="website" className="text-sm font-medium">website</label>
+                                        <label htmlFor="website" className="text-sm font-medium">Website</label>
                                         <Input
                                             placeholder="abc@demo.com"
                                             value={formData.website}
@@ -261,50 +251,48 @@ const AddCompany = () => {
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="facebook" className="text-sm font-medium">Facebook</label>
+                                        <label htmlFor="facebook_url" className="text-sm font-medium">Facebook URL</label>
                                         <Input
                                             placeholder="facebook.com/profile"
-                                            value={formData.facebook}
-                                            onChange={handleInputChange('facebook')}
+                                            value={formData.facebook_url}
+                                            onChange={handleInputChange('facebook_url')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="instagram" className="text-sm font-medium">Instagram</label>
+                                        <label htmlFor="instagram_url" className="text-sm font-medium">Instagram URL</label>
                                         <Input
                                             placeholder="instagram.com/profile"
-                                            value={formData.instagram}
-                                            onChange={handleInputChange('instagram')}
+                                            value={formData.instagram_url}
+                                            onChange={handleInputChange('instagram_url')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="linkedin" className="text-sm font-medium">Linkedin</label>
+                                        <label htmlFor="linkedin_url" className="text-sm font-medium">LinkedIn URL</label>
                                         <Input
                                             placeholder="linkedin.com/profile"
-                                            value={formData.linkedin}
-                                            onChange={handleInputChange('linkedin')}
+                                            value={formData.linkedin_url}
+                                            onChange={handleInputChange('linkedin_url')}
                                         />
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label htmlFor="twitter" className="text-sm font-medium">Twitter</label>
+                                        <label htmlFor="twitter_url" className="text-sm font-medium">Twitter URL</label>
                                         <Input
                                             placeholder="twitter.com/profile"
-                                            value={formData.twitter}
-                                            onChange={handleInputChange('twitter')}
+                                            value={formData.twitter_url}
+                                            onChange={handleInputChange('twitter_url')}
                                         />
                                     </div>
-                                                                       <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2">
                                         <label htmlFor="currency" className="text-sm font-medium">Currency</label>
                                         <Select
                                             placeholder="Select Currency type"
                                             options={currencyTypeOptions}
-                                            value={currencyTypeOptions.find(option => option.value === formData.Currency)}
-                                            onChange={(option) => setFormData(prev => ({ ...prev, Currency: option?.value || '' }))}
+                                            value={currencyTypeOptions.find(option => option.value === formData.currency)}
+                                            onChange={(option) => setFormData(prev => ({ ...prev, currency: option?.value || '' }))}
                                         />
                                     </div>
-
                                 </div>
                             </TabContent>
-
                         </div>
                     </Tabs>
                 </Card>
@@ -328,4 +316,4 @@ const AddCompany = () => {
     )
 }
 
-export default AddCompany 
+export default AddCompany
