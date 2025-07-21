@@ -14,10 +14,10 @@ const AddCompany = () => {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         // Basic Information
-        name: '',
-        email: '',
-        admin_name: '',
-        admin_email: '',
+        name: '', //required
+        email: '', //required
+        admin_name: '', //required
+        admin_email: '', //required
         admin_password: '', //required
         phone: '',
         title: '',

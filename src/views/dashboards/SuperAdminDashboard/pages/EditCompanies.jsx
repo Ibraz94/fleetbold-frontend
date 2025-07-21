@@ -11,8 +11,9 @@ const { TabNav, TabList, TabContent } = Tabs;
 
 const EditCompany = () => {
   const navigate = useNavigate();
+  
   const { companyId } = useParams(); // Get the company id from the URL
-  const [loading, setLoading] = useState(false); // Loading state for both fetching and submitting
+  const [loading, setLoading] = useState(true); // Loading state for both fetching and submitting
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,7 +38,7 @@ const EditCompany = () => {
   const [activeTab, setActiveTab] = useState('basic');
 
   // Fetch company data on page load
-  useEffect(() => {
+   useEffect(() => {
     const fetchCompany = async () => {
       setLoading(true); // Set loading to true when fetching data
       try {
@@ -56,6 +57,7 @@ const EditCompany = () => {
 
     fetchCompany();
   }, [companyId]);
+
 
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({
@@ -121,7 +123,11 @@ const EditCompany = () => {
         </div>
       </div>
 
-      <Form onSubmit={handleSubmit}>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          Loading...
+        </div>
+      ) : ( <Form onSubmit={handleSubmit}>
         <Card>
           <Tabs value={activeTab} onChange={setActiveTab}>
             <TabList>
@@ -160,7 +166,7 @@ const EditCompany = () => {
                     </label>
                     <Input
                       placeholder="Enter admin name"
-                      value={formData.admin_name}
+                      value={formData.users[0].name}
                       onChange={handleInputChange('admin_name')}
                       required
                     />
@@ -172,7 +178,7 @@ const EditCompany = () => {
                     </label>
                     <Input
                       placeholder="Enter admin email"
-                      value={formData.admin_email}
+                      value={formData.users[0].email}
                       onChange={handleInputChange('admin_email')}
                     />
                   </div>
@@ -342,7 +348,7 @@ const EditCompany = () => {
             {loading ? 'Updating...' : 'Update Company'}
           </Button>
         </div>
-      </Form>
+      </Form>)}
     </Container>
   );
 };

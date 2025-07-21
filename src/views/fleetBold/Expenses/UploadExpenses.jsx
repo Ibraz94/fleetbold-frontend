@@ -159,7 +159,7 @@ export default function UploadExpenses() {
                 className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 transition-all"
             >
                 <span className="text-gray-600 mb-2">Click to choose files</span>
-                <span className="text-sm text-gray-400">Supported: CSV, PDF, JPG, PNG (Max: 10MB)</span>
+                <span className="text-sm text-gray-400">Supported: PDF, JPG, PNG (Max: 1MB)</span>
                 <input
                     id="file-upload"
                     type="file"
@@ -175,7 +175,7 @@ export default function UploadExpenses() {
                 </div>
             )}
 
-            {ocrHtml && (
+            {/* {ocrHtml && (
                 <div className="mt-6">
                     <h4 className="font-semibold mb-2">OCR Results (Editable + Highlighted)</h4>
                     <div
@@ -186,7 +186,7 @@ export default function UploadExpenses() {
                         onInput={(e) => setEditableOcrText(e.currentTarget.innerText)}
                     />
                 </div>
-            )}
+            )} */}
 
             {ocrHtml && (
                 <form onSubmit={handleSubmit} className="mt-10">
