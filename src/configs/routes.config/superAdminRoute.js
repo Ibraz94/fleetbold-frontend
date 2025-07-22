@@ -93,6 +93,15 @@ const superAdminRoute = [
             pageContainerType: 'contained',
         },
     },
+        {
+        key: 'superadmin.users',
+        path: `${SUPER_ADMIN_PREFIX_PATH}/users`,
+        component: lazy(() => import('@/views/fleetBold/Users')),
+        authority: [SUPER_ADMIN],
+        meta: {
+            pageContainerType: 'contained',
+        },
+    },
 ]
 
 export default superAdminRoute 

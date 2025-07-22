@@ -120,15 +120,15 @@ const fleetBoldRoute = [
             pageContainerType: 'contained',
         },
     },
-    {
-        key: 'fleetBold.users',
-        path: `${FLEETBOLD_PREFIX_PATH}/users`,
-        component: lazy(() => import('@/views/fleetBold/Users')),
-        authority: [ADMIN, USER],
-        meta: {
-            pageContainerType: 'contained',
-        },
-    },
+    // {
+    //     key: 'fleetBold.users',
+    //     path: `${FLEETBOLD_PREFIX_PATH}/users`,
+    //     component: lazy(() => import('@/views/fleetBold/Users')),
+    //     authority: [ADMIN, USER],
+    //     meta: {
+    //         pageContainerType: 'contained',
+    //     },
+    // },
     {
         key: 'fleetBold.settings',
         path: `${FLEETBOLD_PREFIX_PATH}/settings`,

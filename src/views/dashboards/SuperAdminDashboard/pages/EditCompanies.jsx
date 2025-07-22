@@ -119,7 +119,7 @@ const EditCompany = () => {
           <Button variant="plain" size="sm" icon={<HiOutlineArrowLeft />} onClick={handleBack}>
             Back
           </Button>
-          <h4 className="text-2xl font-semibold">Edit Company</h4>
+          <h4 className="text-2xl font-semibold">Manage Company</h4>
         </div>
       </div>
 

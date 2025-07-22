@@ -78,6 +78,16 @@ const superAdminNavigationConfig = [
                 authority: [SUPER_ADMIN],
                 subMenu: [],
             },
+            {
+                key: 'superadmin.users',
+                path: '/super-admin/users',
+                title: 'Users',
+                translateKey: 'nav.superAdmin.users',
+                //icon: 'users',
+                type: 'item',
+                authority: [SUPER_ADMIN],
+                subMenu: [],
+            },
         ],
     },
 ]

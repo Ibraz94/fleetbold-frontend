@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, Button, Spinner } from '@/components/ui'
 import { HiShieldCheck, HiRefresh, HiOfficeBuilding, HiUsers, HiCurrencyDollar, HiExclamationCircle } from 'react-icons/hi'
 import { apiGetCompaniesStatistics, apiGetCompanies } from '@/services/companiesService'
+import {apiFetchUsers} from '@/services/UserService'
 import { useNavigate } from 'react-router'
 
 const SuperAdminDashboard = () => {
@@ -14,10 +15,28 @@ const SuperAdminDashboard = () => {
         monthlyRevenue: 145600 // Keep mock for now
     })
     const [loading, setLoading] = useState(true)
+    const [totalUserCount, setTotalUserCount] = useState(0)
+
+    let fetchTotalUser = async () =>{
+
+        try{
+            const response = await apiFetchUsers();
+            let count = response?.pagination?.total || 'N/A'
+            setTotalUserCount(count)
+
+
+        }catch(err){
+            console.log(error)
+             setTotalUserCount('ERR')
+
+        }
+
+    }
 
     // Fetch statistics
     useEffect(() => {
         fetchStatistics()
+        fetchTotalUser()
     }, [])
 
     const fetchStatistics = async () => {
@@ -186,9 +205,9 @@ const SuperAdminDashboard = () => {
                             <HiUsers className="text-green-600 text-xl" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-400">Active Users</p>
+                            <p className="text-sm font-medium text-gray-400">Total Users</p>
                             <p className="text-2xl font-bold text-black dark:text-white">
-                                {loading ? <Spinner size="sm" /> : statistics.activeUsers}
+                                {loading ? <Spinner size="sm" /> : totalUserCount}
                             </p>
                         </div>
                     </div>
@@ -294,7 +313,7 @@ const SuperAdminDashboard = () => {
                 </div>
                 <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
+                        <Button onClick={()=> navigate('/super-admin/company/add')} variant="outline" className="h-16 flex flex-col items-center justify-center">
                             <HiOfficeBuilding className="text-xl mb-1" />
                             <span className="text-sm">Add Company</span>
                         </Button>
