@@ -31,6 +31,7 @@ export async function apiDeleteExpense(id) {
 }
 
 export async function apiUpdateExpense(id, data) {
+    console.log("ID:", id, "Data:", data);
     return ApiService.fetchDataWithAxios({
         url: `/expenses/${id}`,
         method: 'put',
@@ -86,3 +87,11 @@ export async function apiExpenseSummary() {
     });
 }
 
+// assign an expense to a reservation
+export async function apiAssignExpenseToReservation(expenseId, reservationId) {
+    return ApiService.fetchDataWithAxios({
+        url: `/expenses/${expenseId}/assign`,
+        method: 'post',
+        data: { reservation_id: reservationId }
+    });
+}

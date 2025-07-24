@@ -1,6 +1,7 @@
-import { Card, Button, Table, Dialog, Select, DatePicker, Input } from '@/components/ui'
+import { Card, Button, Table, Dialog, Select, DatePicker, Input, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineDownload, HiOutlineDocumentAdd, HiOutlineDocument, HiOutlineFilter } from 'react-icons/hi'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { apigetReservation } from '@/services/reservationServices'
 
 const mockInvoices = [
     {
@@ -69,7 +70,15 @@ const Invoices = () => {
     const [viewDialog, setViewDialog] = useState(false)
     const [generateDialog, setGenerateDialog] = useState(false)
     const [selectedInvoice, setSelectedInvoice] = useState(null)
-    
+    const [reservations, setReservations] = useState([]);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    });
+    const [loading, setLoading] = useState(false)
+
+
     // Filter states
     const [filters, setFilters] = useState({
         expenseType: '',
@@ -84,10 +93,10 @@ const Invoices = () => {
         return mockInvoices.filter(invoice => {
             const matchesType = !filters.expenseType || invoice.type === filters.expenseType
             const matchesStatus = !filters.status || invoice.status === filters.status
-            const matchesSearch = !filters.searchTerm || 
+            const matchesSearch = !filters.searchTerm ||
                 invoice.id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
                 invoice.bookingId.toLowerCase().includes(filters.searchTerm.toLowerCase())
-            
+
             const invoiceDate = new Date(invoice.date)
             const matchesDateFrom = !filters.dateFrom || invoiceDate >= new Date(filters.dateFrom)
             const matchesDateTo = !filters.dateTo || invoiceDate <= new Date(filters.dateTo)
@@ -158,6 +167,13 @@ const Invoices = () => {
             searchTerm: '',
         })
     }
+
+    const handleScroll = (e) => {
+        const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
+        if (bottom && reservationPgination.has_next && !rervationLoading) {
+            apigetReservations(reservationPgination.current_page + 1);
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -244,6 +260,43 @@ const Invoices = () => {
             ),
         },
     ]
+
+    // Fetch reservations data
+    const fetchReservations = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apigetReservation({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Reservations response:', response) // Debug log
+            setReservations(response.reservations || [])
+            console.log("Reservations:", response.reservations);
+
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching reservations:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch reservations',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true)
+            await Promise.all([fetchReservations()])
+            setLoading(false)
+        }
+        loadData()
+    }, [])
 
     return (
         <div className="space-y-4">
@@ -351,8 +404,8 @@ const Invoices = () => {
                             <Table.Tr key={invoice.id}>
                                 {columns.map((column) => (
                                     <Table.Td key={column.accessor}>
-                                        {column.Cell ? 
-                                            column.Cell({ row: invoice }) : 
+                                        {column.Cell ?
+                                            column.Cell({ row: invoice }) :
                                             invoice[column.accessor]
                                         }
                                     </Table.Td>
@@ -443,8 +496,17 @@ const Invoices = () => {
                 title="Generate Invoice"
             >
                 <div className="space-y-4">
-                    <p>Select the expenses to include in the invoice:</p>
-                    {/* Add expense selection here */}
+                    <p>Select the reservation to include in the invoice:</p>
+                    <Select
+                        options={reservations.map((reservation) => ({
+                            value: reservation.id,
+                            label: reservation.reservation_number,
+                        }))}
+                        value={reservations.map((r) => r.description)}
+                        onChange={(value) => setSelectedReservation(value)}
+                        onScroll={handleScroll} // Add scroll listener for pagination
+                    // isLoading={reservationsLoading} // Show loading spinner if fetching more bookings
+                    />
                     <div className="flex justify-end">
                         <Button
                             variant="solid"

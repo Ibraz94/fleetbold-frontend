@@ -9,6 +9,7 @@ import { apiDeleteReservation, apigetReservations } from '@/services/reservation
 const Reservations = () => {
     const navigate = useNavigate();
     const [reservations, setReservations] = useState([]);
+    const [reservationsExpense, setReservationsExpense] = useState([]);
     const [loading, setLoading] = useState(true)
     const [viewDialog, setViewDialog] = useState(false)
     const [pagination, setPagination] = useState({
@@ -28,33 +29,47 @@ const Reservations = () => {
         invoiceStatus: 'Paid'
     }
 
-    // Fetch vehicles data
+    // Fetch reservations data
     const fetchReservations = async (page = 1, pageSize = 10) => {
         try {
             const response = await apigetReservations({
                 page,
                 per_page: pageSize,
-            })
-            console.log('Reservations response:', response) // Debug log
-            setReservations(response.reservations || [])
-            console.log("Reservations:", response.reservations);
+            });
+
+            const reservations = response.reservations || [];
+            setReservations(reservations);
+            console.log("Reservations:", reservations);
+
+            // ✅ Use response.reservations directly, not stale state
+            const allExpenses = reservations.flatMap(reservation => {
+                return (reservation.expenses || []).map(exp => ({
+                    ...exp,
+                    reservationId: reservation.id,
+                    reservationNumber: reservation.reservation_number,
+                    vehicleName: reservation.vehicle_name
+                }));
+            });
+            console.log("Extracted expenses", allExpenses);
+            setReservationsExpense(allExpenses);
 
             setPagination((prev) => ({
                 ...prev,
                 current: page,
                 total: response.pagination?.total || 0,
-            }))
+            }));
         } catch (error) {
-            console.error('Error fetching vehicles:', error)
+            console.error('Error fetching reservations:', error);
             toast.push(
-                error.response?.data?.message || 'Failed to fetch vehicles',
+                error.response?.data?.message || 'Failed to fetch reservations',
                 {
                     placement: 'top-end',
                     type: 'error',
-                },
-            )
+                }
+            );
         }
-    }
+    };
+
 
     const trips = [tripData];
 
@@ -92,10 +107,10 @@ const Reservations = () => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            'paid': {
+            'approved': {
                 bg: 'bg-green-100',
                 textColor: 'text-green-700',
-                text: 'Paid'
+                text: 'Approved'
             },
             'pending': {
                 bg: 'bg-yellow-100',
@@ -245,7 +260,8 @@ const Reservations = () => {
                                 ) : (
                                     reservations.map((reservation) => (
                                         <Tr key={reservation.id}>
-                                            <Td className="font-medium">RSV-{reservation.id}</Td>
+                                            <Td className="font-medium">{reservation.reservation_number
+                                            }</Td>
                                             <Td>{reservation.vehicle_name}</Td>
                                             <Td>{new Date(reservation.start_date).toLocaleString()}</Td>
                                             <Td>{new Date(reservation.end_date).toLocaleString()}</Td>
@@ -339,6 +355,7 @@ const Reservations = () => {
                     <Table>
                         <THead>
                             <Tr>
+                                <Th>Description</Th>
                                 <Th>Type</Th>
                                 <Th>Amount</Th>
                                 <Th>Status</Th>
@@ -346,8 +363,9 @@ const Reservations = () => {
                             </Tr>
                         </THead>
                         <TBody>
-                            {expensesData.map((expense) => (
+                            {reservationsExpense.map((expense) => (
                                 <Tr key={expense.id}>
+                                    <Td>{expense.description}</Td>
                                     <Td>{expense.type}</Td>
                                     <Td className="font-semibold">${expense.amount.toFixed(2)}</Td>
                                     <Td>{getStatusBadge(expense.status)}</Td>

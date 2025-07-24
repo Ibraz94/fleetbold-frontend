@@ -1,89 +1,19 @@
 import { Card, Button, Table, Dialog, Select, Upload, Steps, Progress, Input, Radio, DatePicker, Tooltip, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineLink, HiOutlineUpload, HiOutlineDocumentText, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineX, HiOutlineSearch, HiOutlinePencil, HiOutlineBan, HiOutlineFilter, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi'
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload, apiApproveExpense } from '@/services/ExpensesService'
+import { apiCreateExpenses, apiDeleteExpense, apiFetchExpense, apiFetchExpenses, apiUpdateExpense, apiOcrUpload, apiApproveExpense, apiAssignExpenseToReservation } from '@/services/ExpensesService'
 import { Form } from '@/components/ui/Form'
 import { Navigate, useNavigate } from 'react-router'
-import {apiFetchUpload} from  '@/services/UploadsService'
-import {apigetReservations} from  '@/services/reservationServices'
+import { apiFetchUpload } from '@/services/UploadsService'
+import { apigetReservations } from '@/services/reservationServices'
 import appConfig from '@/configs/app.config'
-
-const mockExpenses = [
-    {
-        id: 'EXP001',
-        type: 'Toll',
-        amount: 25.50,
-        status: 'Unassigned',
-        booking: null,
-        file: 'toll_receipt.pdf',
-        date: '2024-01-15',
-        vendor: 'Highway Tolls',
-        description: 'Highway toll payment',
-        notes: '',
-    },
-    {
-        id: 'EXP002',
-        type: 'Cleaning',
-        amount: 45.00,
-        status: 'Assigned',
-        booking: 'BK001',
-        file: 'cleaning_invoice.pdf',
-        date: '2024-01-16',
-        vendor: 'CleanCar Services',
-        description: 'Vehicle cleaning service',
-        notes: 'Post-rental cleaning',
-    },
-    {
-        id: 'EXP003',
-        type: 'Ticket',
-        amount: 150.00,
-        status: 'Collected',
-        booking: null,
-        file: 'parking_ticket.jpg',
-        date: '2024-01-17',
-        vendor: 'City Parking Authority',
-        description: 'Parking violation ticket',
-        notes: '',
-    },
-    {
-        id: 'EXP004',
-        type: 'Fuel',
-        amount: 85.75,
-        status: 'Disputed',
-        booking: null,
-        file: 'gas_receipt.pdf',
-        date: '2024-01-18',
-        vendor: 'Shell Gas Station',
-        description: 'Fuel purchase',
-        notes: '',
-    },
-    {
-        id: 'EXP005',
-        type: 'Toll',
-        amount: 12.25,
-        status: 'Unassigned',
-        booking: null,
-        file: 'toll_receipt2.pdf',
-        date: '2024-01-19',
-        vendor: 'Bridge Authority',
-        description: 'Bridge toll payment',
-        notes: '',
-    },
-]
-
-const mockBookings = [
-    { value: 'BK001', label: 'Booking BK001 - Toyota Camry', date: '2024-01-15', customer: 'John Doe' },
-    { value: 'BK002', label: 'Booking BK002 - Honda Civic', date: '2024-01-16', customer: 'Jane Smith' },
-    { value: 'BK003', label: 'Booking BK003 - Ford Explorer', date: '2024-01-17', customer: 'Mike Johnson' },
-    { value: 'BK004', label: 'Booking BK004 - Nissan Altima', date: '2024-01-18', customer: 'Sarah Wilson' },
-]
 
 export const EXPENSE_TYPES = [
     { value: 'toll', label: 'Toll' },
     { value: 'ticket', label: 'Ticket' },
-    { value: 'cleaning Fees', label: 'Cleaning Fees' },
-    { value: 'fuel', label: 'Fuel' },
-    { value: 'maintenance', label: 'Maintenance' },
+    { value: 'cleaning', label: 'Cleaning' },
+    { value: 'damage', label: 'Damage' },
+    { value: 'other', label: 'Other' },
 ]
 export const EXPENSE_STATUS = [
     { value: 'pending', label: 'Pending' },
@@ -93,19 +23,14 @@ export const EXPENSE_STATUS = [
     { value: 'paid', label: 'Paid' },
 ]
 
-const mockOCRResults = {
-    'receipt1.jpg': { type: 'Toll', amount: 12.50, vendor: 'Highway Tolls', date: '2024-01-15' },
-    'invoice.pdf': { type: 'Cleaning', amount: 85.00, vendor: 'CleanCar Services', date: '2024-01-16' },
-    'ticket.png': { type: 'Ticket', amount: 150.00, vendor: 'City Parking', date: '2024-01-17' },
-}
-
 const Expenses = () => {
     const navigate = useNavigate();
     const [viewDialog, setViewDialog] = useState(false)
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [assignDialog, setAssignDialog] = useState(false)
     const [selectedExpense, setSelectedExpense] = useState(null)
-    const [selectedBooking, setSelectedBooking] = useState('')
+    const [selectedReservation, setSelectedReservation] = useState('')
+    const [expenseId, setExpenseId] = useState();
 
     // New upload process state
     const [uploadDialog, setUploadDialog] = useState(false)
@@ -140,13 +65,13 @@ const Expenses = () => {
         pageSize: 10,
         total: 0,
     });
-        const [reservationPgination, setreservationPgination] = useState({
+    const [reservationPgination, setreservationPgination] = useState({
         current_page: 1,
         total_pages: 1,
         has_next: false,
     });
     const [reservationsLoading, setreservationsLoading] = useState(false);
-    const [reservations,setReservations] = useState([]);
+    const [reservations, setReservations] = useState([]);
 
     const [loading, setLoading] = useState(false)
     const [manualDialog, setManualDialog] = useState(false);
@@ -158,12 +83,12 @@ const Expenses = () => {
         receipt_url: '',
         amount: null,
         date_occurred: '',
-        id: null
+        id: null,
+        created_by_id: null
     });
     const [editId, SeteditId] = useState();
 
     const emptyFormData = {
-        date_occured: '',
         description: '',
         type: '',
         status: '',
@@ -186,7 +111,7 @@ const Expenses = () => {
                 'Expenses availability:',
                 response.expenses.map((v) => v.id),
             )
-            console.log("Expense id: ", response.expenses.id);
+            console.log("Expense id: ", response.expenses);
             setPagination((prev) => ({
                 ...prev,
                 current: page,
@@ -204,41 +129,9 @@ const Expenses = () => {
         }
     }
 
-    const handleEditExpense = async (e, id) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const expenseData = {
-                ...formData,
-                date_occurred: formData.date_occurred ? formData.date_occurred : {},
-                description: formData.description ? formData.description : {},
-                type: formData.type ? formData.type : {},
-                status: formData.status ? formData.status : {},
-                receipt_url: formData.receipt_url ? formData.receipt_url : {},
-                amount: formData.amount ? formData.amount : null,
-            }
-            await apiUpdateExpense(id, expenseData);
-
-            toast.push('Expense updated successfully!', {
-                placement: 'top-end',
-                type: 'success'
-            })
-
-            Navigate('/fleetbold/expenses');
-        } catch (error) {
-            console.error('Error updating expense:', error)
-            toast.push(error.response?.data?.message || 'Failed to update expense. Please try again.', {
-                placement: 'top-end',
-                type: 'error'
-            })
-        } finally {
-            setLoading(false)
-        }
-    }
-
     const fetchSingleExpense = async (expense) => {
         console.log("Single expense id: ", expense.id);
+        setExpenseId(expense.id)
         try {
             const response = await apiFetchExpense(expense.id)
             console.log('single expense response:', response) // Debug log
@@ -283,6 +176,43 @@ const Expenses = () => {
         }
     };
 
+    // Fetch reservations data
+    const fetchReservations = async (page = 1, pageSize = 10) => {
+        try {
+            const response = await apigetReservations({
+                page,
+                per_page: pageSize,
+            })
+            console.log('Reservations response:', response) // Debug log
+            setReservations(response.reservations || [])
+            console.log("Reservations:", response.reservations);
+
+            setPagination((prev) => ({
+                ...prev,
+                current: page,
+                total: response.pagination?.total || 0,
+            }))
+        } catch (error) {
+            console.error('Error fetching reservations:', error)
+            toast.push(
+                error.response?.data?.message || 'Failed to fetch reservations',
+                {
+                    placement: 'top-end',
+                    type: 'error',
+                },
+            )
+        }
+    }
+
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true)
+            await Promise.all([fetchReservations()])
+            setLoading(false)
+        }
+        loadData()
+    }, [])
+
     useEffect(() => {
         fetchExpenses()
         fetchBookings()
@@ -310,6 +240,51 @@ const Expenses = () => {
         setAssignDialog(true)
     }
 
+    const handleEditExpense = async (e, id) => {
+        if (e?.preventDefault) e.preventDefault();
+        setLoading(true);
+
+        try {
+            const sessionUserString = localStorage.getItem('sessionUser');
+            let userId = null;
+
+            if (sessionUserString) {
+                const sessionUser = JSON.parse(sessionUserString);
+                userId = sessionUser?.state?.user?.id;
+                console.log("User ID:", userId); // should be 3
+            }
+
+            const expenseData = {
+                ...formData,
+                date_occurred: formData.date_occurred || null,
+                description: formData.description || '',
+                type: formData.type || '',
+                status: formData.status || '',
+                receipt_url: formData.receipt_url || '',
+                amount: formData.amount || null,
+                created_by_id: userId,
+            };
+
+            console.log("Expense data to update:", expenseData, "id:", expenseId);
+            await apiUpdateExpense(expenseId, expenseData);
+
+            toast.push('Expense updated successfully!', {
+                placement: 'top-end',
+                type: 'success'
+            });
+
+            Navigate('/fleetbold/expenses');
+        } catch (error) {
+            console.error('Error updating expense:', error);
+            toast.push(error.response?.data?.message || 'Failed to update expense. Please try again.', {
+                placement: 'top-end',
+                type: 'error'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleDeleteExpense = async (expense) => {
         try {
             await apiDeleteExpense(expense)
@@ -331,20 +306,53 @@ const Expenses = () => {
             )
         }
     }
+    const handleAssignSubmit = async () => {
+        if (selectedExpense && selectedReservation) {
+            try {
+                console.log("Assigning expense:", selectedExpense.id, "to reservation:", selectedReservation.value);
 
-    const handleAssignSubmit = () => {
-        if (selectedExpense && selectedBooking) {
-            setExpenses(prev =>
-                prev.map(exp =>
-                    exp.id === selectedExpense.id
-                        ? { ...exp, booking: selectedBooking, status: 'Assigned' }
-                        : exp
-                )
-            )
+                // 1. Assign the expense to the reservation
+                await apiAssignExpenseToReservation(selectedExpense.id, selectedReservation.value);
+
+                // 2. Update the status to "Approved"
+                await apiUpdateExpense(selectedExpense.id, {
+                    status: "approved"
+                });
+
+                // 3. Update local state
+                setExpenses(prev =>
+                    prev.map(exp =>
+                        exp.id === selectedExpense.id
+                            ? {
+                                ...exp,
+                                booking: reservations.find(r => r.id === selectedReservation.value),
+                                status: 'approved'
+                            }
+                            : exp
+                    )
+                );
+                navigate('/fleetBold/expenses');
+                toast.push('Expense assigned and approved successfully!', {
+                    placement: 'top-end',
+                    type: 'success'
+                });
+
+            } catch (error) {
+                console.error("Failed to assign and approve expense:", error);
+                toast.push(error.response?.data?.message || 'Failed to assign/approve expense.', {
+                    placement: 'top-end',
+                    type: 'error'
+                });
+                return;
+            }
         }
-        setAssignDialog(false)
-        setSelectedBooking('')
-    }
+
+        // Close dialog & reset selection
+        setAssignDialog(false);
+        setSelectedReservation('');
+    };
+
+
 
     // Upload process handlers
     const handleUploadDialog = () => {
@@ -368,6 +376,7 @@ const Expenses = () => {
 
     const handleEditDialog = () => {
         setEditDialog(true);
+        console.log(selectedExpense);
     }
 
     const handleInputChange = (field) => (e) => {
@@ -634,7 +643,7 @@ const Expenses = () => {
             const expenseData = {
                 ...formData,
                 // Expenses payload
-                date_occured: formData.date_occured ? new Date(formData.date_occured).toISOString() : null,
+                // date_occured: formData.date_occured ? new Date(formData.date_occured).toISOString() : null,
                 description: formData.description || '',
                 type: formData.type || '',
                 status: formData.status || '',
@@ -644,7 +653,7 @@ const Expenses = () => {
             }
 
             await apiCreateExpenses(expenseData)
-
+            navigate('/fleetbold/expenses')
             toast.push('Expense created successfully!', {
                 placement: 'top-end',
                 type: 'success'
@@ -695,34 +704,34 @@ const Expenses = () => {
         },
 
         {
-    header: 'File',
-    accessor: 'file',
-    Cell: ({ row }) => {
-        const handleClick = async () => {
-            try {
-                const response = await apiFetchUpload(row.id);
-                console.log('Upload fetched:', response);
-                const fileUrl = appConfig.apiPrefix+response?.file_url;
-                if (fileUrl) {
-                    window.open(fileUrl, '_blank');
-                } else {
-                    console.warn('File URL not found in response');
-                }
-            } catch (error) {
-                console.error('Failed to fetch upload:', error);
-            }
-        };
+            header: 'File',
+            accessor: 'file',
+            Cell: ({ row }) => {
+                const handleClick = async () => {
+                    try {
+                        const response = await apiFetchUpload(row.id);
+                        console.log('Upload fetched:', response);
+                        const fileUrl = appConfig.apiPrefix + response?.file_url;
+                        if (fileUrl) {
+                            window.open(fileUrl, '_blank');
+                        } else {
+                            console.warn('File URL not found in response');
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch upload:', error);
+                    }
+                };
 
-        return (
-            <span
-                onClick={handleClick}
-                style={{ cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
-            >
-                {row.receipt_url || ''}
-            </span>
-        );
-    },
-},
+                return (
+                    <span
+                        onClick={handleClick}
+                        style={{ cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
+                    >
+                        {row.receipt_url || ''}
+                    </span>
+                );
+            },
+        },
         {
             header: 'Status',
             accessor: 'status',
@@ -769,7 +778,7 @@ const Expenses = () => {
                             size="sm"
                             icon={<HiOutlineLink />}
                             onClick={() => handleAssign(row)}
-                            title="Approve Expense"
+                            title="Assign Expense"
                         />
                     )}
                     <Button
@@ -1522,35 +1531,35 @@ const Expenses = () => {
 
             {/* Existing Assign Dialog */} {/* this here */}
             <Dialog isOpen={assignDialog} onClose={() => setAssignDialog(false)} title="Assign to Booking">
-            {selectedExpense && (
-                <div className="space-y-4">
-                    <div>
-                        <h6>Expense Details</h6>
-                        <p>
-                            {selectedExpense.type} - ${selectedExpense.amount}
-                        </p>
+                {selectedExpense && (
+                    <div className="space-y-4">
+                        <div>
+                            <h6>Expense Details</h6>
+                            <p>
+                                {selectedExpense.type} - ${selectedExpense.amount}
+                            </p>
+                        </div>
+                        <div>
+                            <h6>Select Reservation</h6>
+                            <Select
+                                options={reservations.map((reservation) => ({
+                                    value: reservation.id,
+                                    label: reservation.reservation_number,
+                                }))}
+                                value={selectedReservation}
+                                onChange={(value) => setSelectedReservation(value)}
+                                onScroll={handleScroll} // Add scroll listener for pagination
+                                isLoading={reservationsLoading} // Show loading spinner if fetching more bookings
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <Button variant="solid" onClick={handleAssignSubmit}>
+                                Assign
+                            </Button>
+                        </div>
                     </div>
-                    <div>
-                        <h6>Select Booking</h6>
-                        <Select
-                            options={reservations.map((booking) => ({
-                                value: booking.id,
-                                label: booking.vehicle_name, 
-                            }))}
-                            value={selectedBooking}
-                            onChange={(value) => setSelectedBooking(value)}
-                            onScroll={handleScroll} // Add scroll listener for pagination
-                            isLoading={reservationsLoading} // Show loading spinner if fetching more bookings
-                        />
-                    </div>
-                    <div className="flex justify-end">
-                        <Button variant="solid" onClick={handleAssignSubmit}>
-                            Assign
-                        </Button>
-                    </div>
-                </div>
-            )}
-        </Dialog>
+                )}
+            </Dialog>
 
             {/* Existing View Dialog */}
             <Dialog
