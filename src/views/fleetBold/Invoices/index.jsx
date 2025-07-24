@@ -1,7 +1,9 @@
 import { Card, Button, Table, Dialog, Select, DatePicker, Input, toast } from '@/components/ui'
 import { HiOutlineEye, HiOutlineDownload, HiOutlineDocumentAdd, HiOutlineDocument, HiOutlineFilter } from 'react-icons/hi'
 import { useState, useMemo, useEffect } from 'react'
-import { apigetReservation } from '@/services/reservationServices'
+import { apigetReservation, apigetReservations } from '@/services/reservationServices'
+import { apiCreateInvoice } from '@/services/invoicesService'
+import { useNavigate } from 'react-router'
 
 const mockInvoices = [
     {
@@ -67,6 +69,7 @@ const statusOptions = [
 ]
 
 const Invoices = () => {
+    const navigate = useNavigate();
     const [viewDialog, setViewDialog] = useState(false)
     const [generateDialog, setGenerateDialog] = useState(false)
     const [selectedInvoice, setSelectedInvoice] = useState(null)
@@ -76,7 +79,8 @@ const Invoices = () => {
         pageSize: 10,
         total: 0,
     });
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
+    const [selectedReservation, setSelectedReservation] = useState('')
 
 
     // Filter states
@@ -114,8 +118,26 @@ const Invoices = () => {
         setGenerateDialog(true)
     }
 
-    const handleGenerateSubmit = () => {
+    const handleGenerateSubmit = async () => {
         // In a real app, this would generate a new invoice
+        if (selectedReservation) {
+            try {
+                await apiCreateInvoice({reservation_id: selectedReservation.value});
+
+                navigate('/fleetBold/invoices');
+                toast.push('Invoice generated successfully!', {
+                    placement: 'top-end',
+                    type: 'success'
+                });
+            } catch (error) {
+                console.error("Failed to generate invoice:", error);
+                toast.push(error.response?.data?.message || 'Failed to generate invoice', {
+                    placement: 'top-end',
+                    type: 'error'
+                });
+                return;
+            }
+        }
         setGenerateDialog(false)
     }
 
@@ -264,7 +286,7 @@ const Invoices = () => {
     // Fetch reservations data
     const fetchReservations = async (page = 1, pageSize = 10) => {
         try {
-            const response = await apigetReservation({
+            const response = await apigetReservations({
                 page,
                 per_page: pageSize,
             })
@@ -502,7 +524,7 @@ const Invoices = () => {
                             value: reservation.id,
                             label: reservation.reservation_number,
                         }))}
-                        value={reservations.map((r) => r.description)}
+                        value={selectedReservation}
                         onChange={(value) => setSelectedReservation(value)}
                         onScroll={handleScroll} // Add scroll listener for pagination
                     // isLoading={reservationsLoading} // Show loading spinner if fetching more bookings
